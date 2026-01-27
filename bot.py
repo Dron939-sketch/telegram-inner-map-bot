@@ -10,34 +10,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Состояния разговора
+# Состояния
 NAME, STAGE1, STAGE2, DETAILED_TEST = range(4)
 
-# Конфигурация архетипов
+# Архетипы
 ARCHETYPES = {
-    '1A': {
-        'name': '🛡️ ФИЛОСОФ-ОТШЕЛЬНИК',
-        'description': 'Вы ищете ответы внутри себя и стремитесь к внутренней гармонии.',
-        'emoji': '🛡️'
-    },
-    '1B': {
-        'name': '⚔️ ВОИН-АТЛЕТ',
-        'description': 'Вы фокусируетесь на себе и стремитесь к росту и достижениям.',
-        'emoji': '⚔️'
-    },
-    '1C': {
-        'name': '💰 ДИПЛОМАТ-ЦЕЛИТЕЛЬ',
-        'description': 'Вы ищете своё место в системе и стремитесь к гармонии с миром.',
-        'emoji': '💰'
-    },
-    '1D': {
-        'name': '🔥 ЛИДЕР-РЕВОЛЮЦИОНЕР',
-        'description': 'Вы видите несовершенство системы и стремитесь её изменить.',
-        'emoji': '🔥'
-    }
+    '1A': {'name': '🛡️ ФИЛОСОФ-ОТШЕЛЬНИК', 'description': 'Вы ищете ответы внутри себя и стремитесь к внутренней гармонии.'},
+    '1B': {'name': '⚔️ ВОИН-АТЛЕТ', 'description': 'Вы фокусируетесь на себе и стремитесь к росту и достижениям.'},
+    '1C': {'name': '💰 ДИПЛОМАТ-ЦЕЛИТЕЛЬ', 'description': 'Вы ищете своё место в системе и стремитесь к гармонии с миром.'},
+    '1D': {'name': '🔥 ЛИДЕР-РЕВОЛЮЦИОНЕР', 'description': 'Вы видите несовершенство системы и стремитесь её изменить.'}
 }
 
-# Вопросы базового теста
+# Вопросы этап 1
 STAGE1_QUESTIONS = [
     "Когда у вас возникает проблема, вы в первую очередь:\nA) Анализируете свои чувства и мысли\nB) Думаете, как это влияет на окружающих",
     "В конфликтной ситуации вы склонны:\nA) Уйти в себя и обдумать происходящее\nB) Активно искать решение, вовлекая других",
@@ -49,6 +33,7 @@ STAGE1_QUESTIONS = [
     "Ваши цели связаны с:\nA) Личным совершенствованием\nB) Влиянием на систему или общество"
 ]
 
+# Вопросы этап 2
 STAGE2_QUESTIONS = [
     "В сложной ситуации вы склонны:\nA) Искать безопасность и стабильность\nB) Идти на риск ради возможностей",
     "Ваша стратегия в жизни:\nA) Сохранить то, что имею\nB) Завоевать новое",
@@ -60,7 +45,7 @@ STAGE2_QUESTIONS = [
     "Ваша энергия направлена на:\nA) Защиту своего пространства\nB) Завоевание нового пространства"
 ]
 
-# Вопросы детального теста
+# Детальные вопросы
 DETAILED_QUESTIONS = {
     'МИССИЯ': [
         "Я чувствую, что моя жизнь имеет глубокий смысл",
@@ -106,7 +91,7 @@ DETAILED_QUESTIONS = {
     ]
 }
 
-# Команда /start
+# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🎯 Начать тест", callback_data='start_test')],
@@ -116,18 +101,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(
         "👋 *Привет!*\n\n"
-        "Я помогу найти твой внутренний архетип и \"узел\", где застряла твоя энергия.\n\n"
-        "🎯 *Тест состоит из двух этапов:*\n"
+        "Я помогу найти твой внутренний архетип.\n\n"
+        "🎯 *Тест:*\n"
         "1️⃣ Базовое сканирование (16 вопросов)\n"
         "2️⃣ Углублённое сканирование (30 вопросов)\n\n"
-        "⏱ Займёт около 10 минут.\n\n"
-        "Готов начать?",
+        "⏱ Займёт ~10 минут.\n\n"
+        "Готов?",
         reply_markup=reply_markup,
         parse_mode='Markdown'
     )
     return ConversationHandler.END
 
-# Обработка кнопок
+# Кнопки
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -139,21 +124,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'info':
         await query.edit_message_text(
             "ℹ️ *О тесте*\n\n"
-            "Этот тест основан на модели логических уровней Дилтса.\n\n"
-            "Он поможет:\n"
-            "• Определить твой внутренний архетип\n"
-            "• Найти \"узел\" — уровень, где застряла энергия\n"
-            "• Получить персональную терапевтическую сказку\n\n"
-            "Отвечай честно — здесь нет правильных ответов.",
+            "Основан на модели Дилтса.\n\n"
+            "Поможет:\n"
+            "• Определить архетип\n"
+            "• Найти \"узел\" энергии\n"
+            "• Получить сказку\n\n"
+            "Отвечай честно.",
             parse_mode='Markdown'
         )
-        
-        keyboard = [[InlineKeyboardButton("🎯 Начать тест", callback_data='start_test')]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("Готов начать?", reply_markup=reply_markup)
+        keyboard = [[InlineKeyboardButton("🎯 Начать", callback_data='start_test')]]
+        await query.message.reply_text("Готов?", reply_markup=InlineKeyboardMarkup(keyboard))
         return ConversationHandler.END
 
-# Получение имени
+# Имя
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['name'] = update.message.text
     context.user_data['stage1_answers'] = []
@@ -162,25 +145,22 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"Приятно познакомиться, {update.message.text}! 😊\n\n"
         "🎯 *ЭТАП 1: ФОКУС*\n\n"
-        "Сейчас будет 8 вопросов.\n"
-        "Выбирай вариант, который ближе тебе.",
+        "8 вопросов.",
         parse_mode='Markdown'
     )
     
     return await ask_stage1_question(update, context)
 
-# Задать вопрос этапа 1
+# Вопрос этап 1
 async def ask_stage1_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    question_num = context.user_data['stage1_question']
+    q_num = context.user_data['stage1_question']
     
-    if question_num >= len(STAGE1_QUESTIONS):
+    if q_num >= len(STAGE1_QUESTIONS):
         context.user_data['stage2_answers'] = []
         context.user_data['stage2_question'] = 0
         
         await update.message.reply_text(
-            "✅ *Этап 1 завершён!*\n\n"
-            "🎯 *ЭТАП 2: СТРАТЕГИЯ*\n\n"
-            "Ещё 8 вопросов.",
+            "✅ *Этап 1 завершён!*\n\n🎯 *ЭТАП 2: СТРАТЕГИЯ*\n\n8 вопросов.",
             parse_mode='Markdown'
         )
         return await ask_stage2_question(update, context)
@@ -189,16 +169,15 @@ async def ask_stage1_question(update: Update, context: ContextTypes.DEFAULT_TYPE
         [InlineKeyboardButton("A", callback_data='stage1_A')],
         [InlineKeyboardButton("B", callback_data='stage1_B')]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"*Вопрос {question_num + 1} из 8:*\n\n{STAGE1_QUESTIONS[question_num]}",
-        reply_markup=reply_markup,
+        f"*Вопрос {q_num + 1}/8:*\n\n{STAGE1_QUESTIONS[q_num]}",
+        reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
     return STAGE1
 
-# Обработка ответа этапа 1
+# Ответ этап 1
 async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -209,39 +188,33 @@ async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.message.delete()
     
-    # ИСПРАВЛЕНИЕ: создаём фейковый update для продолжения
-    class FakeMessage:
-        async def reply_text(self, text, reply_markup=None, parse_mode=None):
-            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
-    
+    # Создаём объект для продолжения
     class FakeUpdate:
-        def __init__(self):
-            self.message = FakeMessage()
+        def __init__(self, original_query):
+            self.message = original_query.message
     
-    fake_update = FakeUpdate()
-    return await ask_stage1_question(fake_update, context)
+    return await ask_stage1_question(FakeUpdate(query), context)
 
-# Задать вопрос этапа 2
+# Вопрос этап 2
 async def ask_stage2_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    question_num = context.user_data['stage2_question']
+    q_num = context.user_data['stage2_question']
     
-    if question_num >= len(STAGE2_QUESTIONS):
+    if q_num >= len(STAGE2_QUESTIONS):
         return await calculate_archetype(update, context)
     
     keyboard = [
         [InlineKeyboardButton("A", callback_data='stage2_A')],
         [InlineKeyboardButton("B", callback_data='stage2_B')]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"*Вопрос {question_num + 1} из 8:*\n\n{STAGE2_QUESTIONS[question_num]}",
-        reply_markup=reply_markup,
+        f"*Вопрос {q_num + 1}/8:*\n\n{STAGE2_QUESTIONS[q_num]}",
+        reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
     return STAGE2
 
-# Обработка ответа этапа 2
+# Ответ этап 2
 async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -252,19 +225,13 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.message.delete()
     
-    # ИСПРАВЛЕНИЕ: создаём фейковый update для продолжения
-    class FakeMessage:
-        async def reply_text(self, text, reply_markup=None, parse_mode=None):
-            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
-    
     class FakeUpdate:
-        def __init__(self):
-            self.message = FakeMessage()
+        def __init__(self, original_query):
+            self.message = original_query.message
     
-    fake_update = FakeUpdate()
-    return await ask_stage2_question(fake_update, context)
+    return await ask_stage2_question(FakeUpdate(query), context)
 
-# Подсчёт архетипа
+# Результат
 async def calculate_archetype(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stage1 = context.user_data['stage1_answers']
     stage2 = context.user_data['stage2_answers']
@@ -286,60 +253,47 @@ async def calculate_archetype(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data['archetype'] = archetype
     
     message = (
-        "✅ *РЕЗУЛЬТАТ БАЗОВОГО ТЕСТА*\n\n"
-        f"🎯 Ваш архетип:\n*{ARCHETYPES[archetype]['name']}*\n\n"
+        "✅ *РЕЗУЛЬТАТ*\n\n"
+        f"🎯 {ARCHETYPES[archetype]['name']}\n\n"
         f"{ARCHETYPES[archetype]['description']}\n\n"
-        f"📊 *Ваши баллы:*\n"
+        f"📊 *Баллы:*\n"
         f"• Фокус на себе: {score_A}/8\n"
         f"• Фокус на системе: {score_B}/8\n"
         f"• Защита: {score_C}/8\n"
         f"• Экспансия: {score_D}/8\n\n"
-        f"🔍 *Хотите узнать ваш \"внутренний узел\"?*"
+        f"🔍 Узнать \"узел\"?"
     )
     
     keyboard = [[InlineKeyboardButton("🔬 Углублённое сканирование", callback_data='detailed_test')]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    await update.message.reply_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
     return ConversationHandler.END
 
-# Начало детального теста
+# Детальный тест
 async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    context.user_data['detailed_answers'] = {}
+    context.user_data['detailed_answers'] = {level: [] for level in DETAILED_QUESTIONS.keys()}
     context.user_data['current_level'] = 0
     context.user_data['current_question'] = 0
     
-    levels = list(DETAILED_QUESTIONS.keys())
-    for level in levels:
-        context.user_data['detailed_answers'][level] = []
-    
     await query.edit_message_text(
-        "🔬 *УГЛУБЛЁННОЕ СКАНИРОВАНИЕ*\n\n"
-        "30 вопросов по 6 уровням.\n"
-        "Оцените каждое утверждение от 1 до 5.",
+        "🔬 *УГЛУБЛЁННОЕ СКАНИРОВАНИЕ*\n\n30 вопросов по 6 уровням.\nОцени от 1 до 5.",
         parse_mode='Markdown'
     )
     
-    # ИСПРАВЛЕНИЕ: создаём фейковый update
-    class FakeMessage:
-        async def reply_text(self, text, reply_markup=None, parse_mode=None):
-            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
-    
     class FakeUpdate:
-        def __init__(self):
-            self.message = FakeMessage()
+        def __init__(self, original_query):
+            self.message = original_query.message
     
-    fake_update = FakeUpdate()
-    return await ask_detailed_question(fake_update, context)
+    return await ask_detailed_question(FakeUpdate(query), context)
 
-# Задать вопрос детального теста
+# Вопрос детального теста
 async def ask_detailed_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     levels = list(DETAILED_QUESTIONS.keys())
     level_num = context.user_data['current_level']
-    question_num = context.user_data['current_question']
+    q_num = context.user_data['current_question']
     
     if level_num >= len(levels):
         return await calculate_detailed_results(update, context)
@@ -347,33 +301,29 @@ async def ask_detailed_question(update: Update, context: ContextTypes.DEFAULT_TY
     level = levels[level_num]
     questions = DETAILED_QUESTIONS[level]
     
-    if question_num >= len(questions):
+    if q_num >= len(questions):
         context.user_data['current_level'] += 1
         context.user_data['current_question'] = 0
         return await ask_detailed_question(update, context)
     
-    total_question = level_num * 5 + question_num + 1
+    total = level_num * 5 + q_num + 1
     
-    keyboard = [
-        [InlineKeyboardButton("1", callback_data='detailed_1'),
-         InlineKeyboardButton("2", callback_data='detailed_2'),
-         InlineKeyboardButton("3", callback_data='detailed_3'),
-         InlineKeyboardButton("4", callback_data='detailed_4'),
-         InlineKeyboardButton("5", callback_data='detailed_5')]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    keyboard = [[
+        InlineKeyboardButton("1", callback_data='detailed_1'),
+        InlineKeyboardButton("2", callback_data='detailed_2'),
+        InlineKeyboardButton("3", callback_data='detailed_3'),
+        InlineKeyboardButton("4", callback_data='detailed_4'),
+        InlineKeyboardButton("5", callback_data='detailed_5')
+    ]]
     
     await update.message.reply_text(
-        f"🎯 *{level}*\n\n"
-        f"*Вопрос {total_question}/30:*\n\n"
-        f"{questions[question_num]}\n\n"
-        f"1 - Не согласен | 5 - Согласен",
-        reply_markup=reply_markup,
+        f"🎯 *{level}*\n\n*Вопрос {total}/30:*\n\n{questions[q_num]}\n\n1 - Не согласен | 5 - Согласен",
+        reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
     return DETAILED_TEST
 
-# Обработка ответа детального теста
+# Ответ детального теста
 async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -388,52 +338,41 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.message.delete()
     
-    # ИСПРАВЛЕНИЕ: создаём фейковый update
-    class FakeMessage:
-        async def reply_text(self, text, reply_markup=None, parse_mode=None):
-            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
-    
     class FakeUpdate:
-        def __init__(self):
-            self.message = FakeMessage()
+        def __init__(self, original_query):
+            self.message = original_query.message
     
-    fake_update = FakeUpdate()
-    return await ask_detailed_question(fake_update, context)
+    return await ask_detailed_question(FakeUpdate(query), context)
 
-# Подсчёт результатов детального теста
+# Результат детального теста
 async def calculate_detailed_results(update: Update, context: ContextTypes.DEFAULT_TYPE):
     answers = context.user_data['detailed_answers']
     
-    level_scores = {}
-    for level, scores in answers.items():
-        level_scores[level] = sum(scores)
-    
+    level_scores = {level: sum(scores) for level, scores in answers.items()}
     min_level = min(level_scores, key=level_scores.get)
-    min_score = level_scores[min_level]
     
     archetype = context.user_data['archetype']
     
     message = "✅ *РЕЗУЛЬТАТ*\n\n"
     message += f"🎯 {ARCHETYPES[archetype]['name']}\n\n"
-    message += "📊 *Баллы по уровням:*\n\n"
+    message += "📊 *Баллы:*\n\n"
     
     for level, score in level_scores.items():
         emoji = '🔴' if level == min_level else '🟢'
         message += f"{emoji} {level}: {score}/25\n"
     
-    message += f"\n🎯 *Ваш \"узел\": {min_level}* ({min_score}/25)\n\n"
-    message += f"Это уровень, где застряла ваша энергия.\n\n"
-    message += f"📖 Ваша персональная сказка: `{archetype}_{min_level}.pdf`"
+    message += f"\n🎯 *Узел: {min_level}* ({level_scores[min_level]}/25)\n\n"
+    message += f"📖 Сказка: `{archetype}_{min_level}.pdf`"
     
     await update.message.reply_text(message, parse_mode='Markdown')
     return ConversationHandler.END
 
 # Отмена
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Тест отменён. /start для начала.")
+    await update.message.reply_text("Отменено. /start для начала.")
     return ConversationHandler.END
 
-# Главная функция
+# Main
 def main():
     TOKEN = os.environ.get('BOT_TOKEN')
     
@@ -441,7 +380,7 @@ def main():
         logger.error("❌ BOT_TOKEN не найден!")
         return
     
-    application = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).build()
     
     conv_handler = ConversationHandler(
         entry_points=[
@@ -458,11 +397,11 @@ def main():
         per_message=False
     )
     
-    application.add_handler(conv_handler)
-    application.add_handler(CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$'))
+    app.add_handler(conv_handler)
+    app.add_handler(CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$'))
     
     logger.info("🤖 Бот запущен!")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
     main()
