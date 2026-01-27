@@ -208,7 +208,18 @@ async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['stage1_question'] += 1
     
     await query.message.delete()
-    return await ask_stage1_question(query, context)
+    
+    # ИСПРАВЛЕНИЕ: создаём фейковый update для продолжения
+    class FakeMessage:
+        async def reply_text(self, text, reply_markup=None, parse_mode=None):
+            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+    
+    class FakeUpdate:
+        def __init__(self):
+            self.message = FakeMessage()
+    
+    fake_update = FakeUpdate()
+    return await ask_stage1_question(fake_update, context)
 
 # Задать вопрос этапа 2
 async def ask_stage2_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -240,7 +251,18 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['stage2_question'] += 1
     
     await query.message.delete()
-    return await ask_stage2_question(query, context)
+    
+    # ИСПРАВЛЕНИЕ: создаём фейковый update для продолжения
+    class FakeMessage:
+        async def reply_text(self, text, reply_markup=None, parse_mode=None):
+            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+    
+    class FakeUpdate:
+        def __init__(self):
+            self.message = FakeMessage()
+    
+    fake_update = FakeUpdate()
+    return await ask_stage2_question(fake_update, context)
 
 # Подсчёт архетипа
 async def calculate_archetype(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -301,8 +323,17 @@ async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE
         parse_mode='Markdown'
     )
     
-    await query.message.reply_text("Начинаем! 🚀")
-    return await ask_detailed_question(query, context)
+    # ИСПРАВЛЕНИЕ: создаём фейковый update
+    class FakeMessage:
+        async def reply_text(self, text, reply_markup=None, parse_mode=None):
+            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+    
+    class FakeUpdate:
+        def __init__(self):
+            self.message = FakeMessage()
+    
+    fake_update = FakeUpdate()
+    return await ask_detailed_question(fake_update, context)
 
 # Задать вопрос детального теста
 async def ask_detailed_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -356,7 +387,18 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['current_question'] += 1
     
     await query.message.delete()
-    return await ask_detailed_question(query, context)
+    
+    # ИСПРАВЛЕНИЕ: создаём фейковый update
+    class FakeMessage:
+        async def reply_text(self, text, reply_markup=None, parse_mode=None):
+            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+    
+    class FakeUpdate:
+        def __init__(self):
+            self.message = FakeMessage()
+    
+    fake_update = FakeUpdate()
+    return await ask_detailed_question(fake_update, context)
 
 # Подсчёт результатов детального теста
 async def calculate_detailed_results(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -366,21 +408,22 @@ async def calculate_detailed_results(update: Update, context: ContextTypes.DEFAU
     for level, scores in answers.items():
         level_scores[level] = sum(scores)
     
-    max_level = max(level_scores, key=level_scores.get)
-    max_score = level_scores[max_level]
+    min_level = min(level_scores, key=level_scores.get)
+    min_score = level_scores[min_level]
     
     archetype = context.user_data['archetype']
     
     message = "✅ *РЕЗУЛЬТАТ*\n\n"
     message += f"🎯 {ARCHETYPES[archetype]['name']}\n\n"
-    message += "📊 *Баллы:*\n\n"
+    message += "📊 *Баллы по уровням:*\n\n"
     
     for level, score in level_scores.items():
-        emoji = '🔴' if level == max_level else '⚪'
+        emoji = '🔴' if level == min_level else '🟢'
         message += f"{emoji} {level}: {score}/25\n"
     
-    message += f"\n🎯 *Узел: {max_level}* ({max_score}/25)\n\n"
-    message += f"📖 Сказка: `{archetype}_{max_level}.pdf`"
+    message += f"\n🎯 *Ваш \"узел\": {min_level}* ({min_score}/25)\n\n"
+    message += f"Это уровень, где застряла ваша энергия.\n\n"
+    message += f"📖 Ваша персональная сказка: `{archetype}_{min_level}.pdf`"
     
     await update.message.reply_text(message, parse_mode='Markdown')
     return ConversationHandler.END
@@ -411,7 +454,8 @@ def main():
             STAGE2: [CallbackQueryHandler(stage2_answer, pattern='^stage2_')],
             DETAILED_TEST: [CallbackQueryHandler(detailed_answer, pattern='^detailed_')]
         },
-        fallbacks=[CommandHandler('cancel', cancel)]
+        fallbacks=[CommandHandler('cancel', cancel)],
+        per_message=False
     )
     
     application.add_handler(conv_handler)
