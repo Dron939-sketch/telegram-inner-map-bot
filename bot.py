@@ -2,10 +2,12 @@ import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes, ConversationHandler
-import json
 
 # Логирование
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
 # Состояния разговора
@@ -15,22 +17,22 @@ NAME, STAGE1, STAGE2, DETAILED_TEST = range(4)
 ARCHETYPES = {
     '1A': {
         'name': '🛡️ ФИЛОСОФ-ОТШЕЛЬНИК',
-        'description': 'Вы ищете ответы внутри себя и стремитесь к внутренней гармонии. Ваш путь — это путь самопознания и принятия.',
+        'description': 'Вы ищете ответы внутри себя и стремитесь к внутренней гармонии.',
         'emoji': '🛡️'
     },
     '1B': {
         'name': '⚔️ ВОИН-АТЛЕТ',
-        'description': 'Вы фокусируетесь на себе и стремитесь к росту и достижениям. Ваш путь — это путь самосовершенствования и преодоления.',
+        'description': 'Вы фокусируетесь на себе и стремитесь к росту и достижениям.',
         'emoji': '⚔️'
     },
     '1C': {
         'name': '💰 ДИПЛОМАТ-ЦЕЛИТЕЛЬ',
-        'description': 'Вы ищете своё место в системе и стремитесь к гармонии с миром. Ваш путь — это путь адаптации и принятия.',
+        'description': 'Вы ищете своё место в системе и стремитесь к гармонии с миром.',
         'emoji': '💰'
     },
     '1D': {
         'name': '🔥 ЛИДЕР-РЕВОЛЮЦИОНЕР',
-        'description': 'Вы видите несовершенство системы и стремитесь её изменить. Ваш путь — это путь трансформации и влияния.',
+        'description': 'Вы видите несовершенство системы и стремитесь её изменить.',
         'emoji': '🔥'
     }
 }
@@ -58,7 +60,7 @@ STAGE2_QUESTIONS = [
     "Ваша энергия направлена на:\nA) Защиту своего пространства\nB) Завоевание нового пространства"
 ]
 
-# Вопросы детального теста (по 5 на каждый уровень)
+# Вопросы детального теста
 DETAILED_QUESTIONS = {
     'МИССИЯ': [
         "Я чувствую, что моя жизнь имеет глубокий смысл",
@@ -137,12 +139,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'info':
         await query.edit_message_text(
             "ℹ️ *О тесте*\n\n"
-            "Этот тест основан на модели логических уровней Дилтса и архетипической психологии.\n\n"
+            "Этот тест основан на модели логических уровней Дилтса.\n\n"
             "Он поможет:\n"
             "• Определить твой внутренний архетип\n"
             "• Найти \"узел\" — уровень, где застряла энергия\n"
             "• Получить персональную терапевтическую сказку\n\n"
-            "Отвечай честно — здесь нет правильных или неправильных ответов.",
+            "Отвечай честно — здесь нет правильных ответов.",
             parse_mode='Markdown'
         )
         
@@ -165,7 +167,6 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='Markdown'
     )
     
-    # Первый вопрос
     return await ask_stage1_question(update, context)
 
 # Задать вопрос этапа 1
@@ -173,7 +174,6 @@ async def ask_stage1_question(update: Update, context: ContextTypes.DEFAULT_TYPE
     question_num = context.user_data['stage1_question']
     
     if question_num >= len(STAGE1_QUESTIONS):
-        # Переход к этапу 2
         context.user_data['stage2_answers'] = []
         context.user_data['stage2_question'] = 0
         
@@ -215,7 +215,6 @@ async def ask_stage2_question(update: Update, context: ContextTypes.DEFAULT_TYPE
     question_num = context.user_data['stage2_question']
     
     if question_num >= len(STAGE2_QUESTIONS):
-        # Подсчёт результатов
         return await calculate_archetype(update, context)
     
     keyboard = [
@@ -253,7 +252,6 @@ async def calculate_archetype(update: Update, context: ContextTypes.DEFAULT_TYPE
     score_C = stage2.count('A')
     score_D = stage2.count('B')
     
-    # Определение архетипа
     if score_A > score_B and score_C > score_D:
         archetype = '1A'
     elif score_A > score_B and score_D > score_C:
@@ -265,7 +263,6 @@ async def calculate_archetype(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     context.user_data['archetype'] = archetype
     
-    # Отправка результата
     message = (
         "✅ *РЕЗУЛЬТАТ БАЗОВОГО ТЕСТА*\n\n"
         f"🎯 Ваш архетип:\n*{ARCHETYPES[archetype]['name']}*\n\n"
@@ -275,11 +272,10 @@ async def calculate_archetype(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"• Фокус на системе: {score_B}/8\n"
         f"• Защита: {score_C}/8\n"
         f"• Экспансия: {score_D}/8\n\n"
-        f"🔍 *Хотите узнать ваш \"внутренний узел\"?*\n"
-        f"Пройдите углублённое сканирование!"
+        f"🔍 *Хотите узнать ваш \"внутренний узел\"?*"
     )
     
-    keyboard = [[InlineKeyboardButton("🔬 Пройти углублённое сканирование", callback_data='detailed_test')]]
+    keyboard = [[InlineKeyboardButton("🔬 Углублённое сканирование", callback_data='detailed_test')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
@@ -295,20 +291,12 @@ async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data['current_question'] = 0
     
     levels = list(DETAILED_QUESTIONS.keys())
-    
     for level in levels:
         context.user_data['detailed_answers'][level] = []
     
     await query.edit_message_text(
         "🔬 *УГЛУБЛЁННОЕ СКАНИРОВАНИЕ*\n\n"
-        "Сейчас мы найдём точку, где застряла ваша энергия.\n\n"
-        "30 вопросов по 6 уровням:\n"
-        "• Миссия\n"
-        "• Идентичность\n"
-        "• Ценности\n"
-        "• Способности\n"
-        "• Поведение\n"
-        "• Окружение\n\n"
+        "30 вопросов по 6 уровням.\n"
         "Оцените каждое утверждение от 1 до 5.",
         parse_mode='Markdown'
     )
@@ -323,14 +311,12 @@ async def ask_detailed_question(update: Update, context: ContextTypes.DEFAULT_TY
     question_num = context.user_data['current_question']
     
     if level_num >= len(levels):
-        # Подсчёт результатов
         return await calculate_detailed_results(update, context)
     
     level = levels[level_num]
     questions = DETAILED_QUESTIONS[level]
     
     if question_num >= len(questions):
-        # Переход к следующему уровню
         context.user_data['current_level'] += 1
         context.user_data['current_question'] = 0
         return await ask_detailed_question(update, context)
@@ -347,11 +333,10 @@ async def ask_detailed_question(update: Update, context: ContextTypes.DEFAULT_TY
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"🎯 *УРОВЕНЬ: {level}*\n\n"
-        f"*Вопрос {total_question} из 30:*\n\n"
+        f"🎯 *{level}*\n\n"
+        f"*Вопрос {total_question}/30:*\n\n"
         f"{questions[question_num]}\n\n"
-        f"1 - Совсем не согласен\n"
-        f"5 - Полностью согласен",
+        f"1 - Не согласен | 5 - Согласен",
         reply_markup=reply_markup,
         parse_mode='Markdown'
     )
@@ -377,45 +362,32 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def calculate_detailed_results(update: Update, context: ContextTypes.DEFAULT_TYPE):
     answers = context.user_data['detailed_answers']
     
-    # Подсчёт баллов по уровням
     level_scores = {}
     for level, scores in answers.items():
         level_scores[level] = sum(scores)
     
-    # Находим максимальный уровень (узел)
     max_level = max(level_scores, key=level_scores.get)
     max_score = level_scores[max_level]
     
     archetype = context.user_data['archetype']
     
-    # Формирование сообщения
-    message = "✅ *РЕЗУЛЬТАТ УГЛУБЛЁННОГО СКАНИРОВАНИЯ*\n\n"
-    message += f"🎯 Ваш архетип: *{ARCHETYPES[archetype]['name']}*\n\n"
-    message += "📊 *Ваши баллы по уровням:*\n\n"
+    message = "✅ *РЕЗУЛЬТАТ*\n\n"
+    message += f"🎯 {ARCHETYPES[archetype]['name']}\n\n"
+    message += "📊 *Баллы:*\n\n"
     
     for level, score in level_scores.items():
         emoji = '🔴' if level == max_level else '⚪'
         message += f"{emoji} {level}: {score}/25\n"
     
-    message += f"\n🎯 *Ваш \"внутренний узел\":*\n"
-    message += f"*{max_level}* ({max_score}/25)\n\n"
-    
-    # Имя файла сказки
-    story_file = f"{archetype}_{max_level}.pdf"
-    
-    message += f"📖 Ваша персональная терапевтическая сказка:\n`{story_file}`\n\n"
-    message += "⚠️ *Загрузите файл в папку на Google Drive и я отправлю его вам!*"
+    message += f"\n🎯 *Узел: {max_level}* ({max_score}/25)\n\n"
+    message += f"📖 Сказка: `{archetype}_{max_level}.pdf`"
     
     await update.message.reply_text(message, parse_mode='Markdown')
-    
-    # Здесь можно добавить отправку файла, если он есть
-    # await update.message.reply_document(document=open(story_file, 'rb'))
-    
     return ConversationHandler.END
 
 # Отмена
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Тест отменён. Напиши /start, чтобы начать заново.")
+    await update.message.reply_text("Тест отменён. /start для начала.")
     return ConversationHandler.END
 
 # Главная функция
@@ -423,12 +395,11 @@ def main():
     TOKEN = os.environ.get('BOT_TOKEN')
     
     if not TOKEN:
-        logger.error("❌ BOT_TOKEN не найден в переменных окружения!")
+        logger.error("❌ BOT_TOKEN не найден!")
         return
     
     application = Application.builder().token(TOKEN).build()
     
-    # Обработчик разговора
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('start', start),
@@ -446,7 +417,6 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$'))
     
-    # Запуск бота
     logger.info("🤖 Бот запущен!")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
