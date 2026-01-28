@@ -87,6 +87,41 @@ DETAILED_QUESTIONS = {
     ]
 }
 
+# Ссылки на PDF-сказки в Google Drive
+FAIRY_TALES = {
+    # 1A - ФИЛОСОФ-ОТШЕЛЬНИК
+    '1A_МИССИЯ': 'https://drive.google.com/file/d/1WWmcf5t8aaUA_oIl0DR_xN_UKFwbIjp2/view?usp=sharing',
+    '1A_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1n39knulPxkqgmlnvuhajAJ_fZLYkq8iE/view?usp=sharing',
+    '1A_ЦЕННОСТИ': 'https://drive.google.com/file/d/1rv36hmFDKOFB30ba-jETlsREwAIeS1ea/view?usp=sharing',
+    '1A_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1jy2bN6zplfDrUAyGwbB3NwGCmh7qRE3Y/view?usp=sharing',
+    '1A_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1qa4-krpY27m_q4ljtN4yH_TjH8mkp78-/view?usp=sharing',
+    '1A_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1dUcN3FCEtnXjKkzzUtslGbMrxDkcltgQ/view?usp=sharing',
+    
+    # 1B - ВОИН-АТЛЕТ
+    '1B_МИССИЯ': 'https://drive.google.com/file/d/1QYVwcl_sWf-Ntpbp5En7lph1Sb-4v6R-/view?usp=sharing',
+    '1B_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1xcm7d8yPNB0e_fFucvVubpsKS6ZP7d-N/view?usp=sharing',
+    '1B_ЦЕННОСТИ': 'https://drive.google.com/file/d/1OX2M-WODASA9RiwTosP97KrnWY-kdAOj/view?usp=sharing',
+    '1B_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1nH8mls_DaiyZlNZU8m4tuS8zKjBYS14o/view?usp=sharing',
+    '1B_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1_0tvaXMgH9aJ2xGM96WFT-14RPYpAlRs/view?usp=sharing',
+    '1B_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1iQKqlR2P_D4Dxqt4kbnRpER9gkgEdKRN/view?usp=sharing',
+    
+    # 1C - ДИПЛОМАТ-ЦЕЛИТЕЛЬ
+    '1C_МИССИЯ': 'https://drive.google.com/file/d/1l1zH2nY4Ogd7QTU-uANU0v5FL6fReiCS/view?usp=sharing',
+    '1C_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1CP9GBpKwVJey8bteztJ0z1nrk8pLChzu/view?usp=sharing',
+    '1C_ЦЕННОСТИ': 'https://drive.google.com/file/d/1ZSMGbKftI6mCIJGhBWEc-q0k8QBqpDAu/view?usp=sharing',
+    '1C_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1UH7uvFvEtJG8h0J_ti0XUrEjprvqQ7bD/view?usp=sharing',
+    '1C_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1JwVoO3MMl8rRaRttqJWqKHepJUdvbGWC/view?usp=sharing',
+    '1C_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/13HRqpPfdToOGZHWodrnNt6xvfuhExRPL/view?usp=sharing',
+    
+    # 1D - ЛИДЕР-РЕВОЛЮЦИОНЕР
+    '1D_МИССИЯ': 'https://drive.google.com/file/d/1jpJUSNO5Or2qdx2OxRMgBz2JkmVshlIz/view?usp=sharing',
+    '1D_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1DcaKOKK429QqUVJnlRb6K5fWkkICpJYr/view?usp=sharing',
+    '1D_ЦЕННОСТИ': 'https://drive.google.com/file/d/1oZ5gT9Lh7OWGn8XR9LIrMxPV0z_ZuNnz/view?usp=sharing',
+    '1D_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1uphOmKRdH3ga5sbTN18XlLJg6Gevx77b/view?usp=sharing',
+    '1D_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1ccdEJaLoVxalnPMZPbd8UpqN3DeASGzo/view?usp=sharing',
+    '1D_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1SI8msDuxFRQRuDZouNxoi_jlCvi_FFu7/view?usp=sharing',
+}
+
 # /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -98,7 +133,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
-    return ConversationHandler.END  # ✅ ДОБАВЛЕНО
+    return ConversationHandler.END
 
 # Кнопки старта
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -125,7 +160,6 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='Markdown'
     )
     
-    # Задаём первый вопрос
     q_num = context.user_data['stage1_question']
     keyboard = [[InlineKeyboardButton("A", callback_data='stage1_A')], [InlineKeyboardButton("B", callback_data='stage1_B')]]
     await update.message.reply_text(
@@ -140,7 +174,6 @@ async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    # Сохраняем ответ
     context.user_data['stage1_answers'].append(query.data.split('_')[1])
     context.user_data['stage1_question'] += 1
     
@@ -148,7 +181,6 @@ async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     q_num = context.user_data['stage1_question']
     
-    # Проверяем, закончился ли этап 1
     if q_num >= len(STAGE1_QUESTIONS):
         context.user_data['stage2_answers'] = []
         context.user_data['stage2_question'] = 0
@@ -158,7 +190,6 @@ async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='Markdown'
         )
         
-        # Первый вопрос этапа 2
         keyboard = [[InlineKeyboardButton("A", callback_data='stage2_A')], [InlineKeyboardButton("B", callback_data='stage2_B')]]
         await query.message.reply_text(
             f"*Вопрос 1/8:*\n\n{STAGE2_QUESTIONS[0]}",
@@ -167,7 +198,6 @@ async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return STAGE2
     
-    # Следующий вопрос этапа 1
     keyboard = [[InlineKeyboardButton("A", callback_data='stage1_A')], [InlineKeyboardButton("B", callback_data='stage1_B')]]
     await query.message.reply_text(
         f"*Вопрос {q_num + 1}/8:*\n\n{STAGE1_QUESTIONS[q_num]}",
@@ -181,7 +211,6 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    # Сохраняем ответ
     context.user_data['stage2_answers'].append(query.data.split('_')[1])
     context.user_data['stage2_question'] += 1
     
@@ -189,9 +218,7 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     q_num = context.user_data['stage2_question']
     
-    # Проверяем, закончился ли этап 2
     if q_num >= len(STAGE2_QUESTIONS):
-        # Подсчёт результата
         stage1 = context.user_data['stage1_answers']
         stage2 = context.user_data['stage2_answers']
         
@@ -225,11 +252,8 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         keyboard = [[InlineKeyboardButton("🔬 Углублённое сканирование", callback_data='detailed_test')]]
         await query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
-        
-        # ✅ ВАЖНО: НЕ ЗАВЕРШАЕМ РАЗГОВОР, ЖДЁМ НАЖАТИЯ КНОПКИ
-        return STAGE2  # Остаёмся в состоянии STAGE2
+        return STAGE2
     
-    # Следующий вопрос этапа 2
     keyboard = [[InlineKeyboardButton("A", callback_data='stage2_A')], [InlineKeyboardButton("B", callback_data='stage2_B')]]
     await query.message.reply_text(
         f"*Вопрос {q_num + 1}/8:*\n\n{STAGE2_QUESTIONS[q_num]}",
@@ -238,7 +262,7 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return STAGE2
 
-# ✅ ИСПРАВЛЕНО: Начало детального теста
+# Начало детального теста
 async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -252,7 +276,6 @@ async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE
         parse_mode='Markdown'
     )
     
-    # Первый вопрос
     levels = list(DETAILED_QUESTIONS.keys())
     level = levels[0]
     question = DETAILED_QUESTIONS[level][0]
@@ -270,7 +293,7 @@ async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
-    return DETAILED_TEST  # ✅ ПЕРЕХОДИМ В СОСТОЯНИЕ DETAILED_TEST
+    return DETAILED_TEST
 
 # Ответ детального теста
 async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -289,15 +312,12 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.message.delete()
     
-    # Проверяем, закончились ли вопросы текущего уровня
     if context.user_data['current_question'] >= len(DETAILED_QUESTIONS[level]):
         context.user_data['current_level'] += 1
         context.user_data['current_question'] = 0
         level_num = context.user_data['current_level']
     
-    # Проверяем, закончились ли все уровни
     if level_num >= len(levels):
-        # Подсчёт результата
         answers = context.user_data['detailed_answers']
         level_scores = {lvl: sum(scores) for lvl, scores in answers.items()}
         min_level = min(level_scores, key=level_scores.get)
@@ -308,15 +328,34 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             emoji = '🔴' if lvl == min_level else '🟢'
             message += f"{emoji} {lvl}: {score}/25\n"
         
-        message += f"\n🎯 *Узел: {min_level}* ({level_scores[min_level]}/25)\n\n📖 Сказка: `{archetype}_{min_level}.pdf`"
-        await query.message.reply_text(message, parse_mode='Markdown')
+        # ✅ ДОБАВЛЕНА ОТПРАВКА PDF
+        file_key = f"{archetype}_{min_level}"
+        file_url = FAIRY_TALES.get(file_key)
+        
+        message += f"\n🎯 *Узел: {min_level}* ({level_scores[min_level]}/25)\n\n"
+        
+        if file_url:
+            file_id = file_url.split('/d/')[1].split('/')[0]
+            download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+            
+            message += f"📖 Твоя персональная сказка готова!"
+            
+            keyboard = [[InlineKeyboardButton("📥 Скачать сказку", url=download_url)]]
+            await query.message.reply_text(
+                message, 
+                reply_markup=InlineKeyboardMarkup(keyboard), 
+                parse_mode='Markdown'
+            )
+        else:
+            message += f"📖 Сказка `{file_key}.pdf` скоро будет доступна"
+            await query.message.reply_text(message, parse_mode='Markdown')
+        
         return ConversationHandler.END
-
-    # Следующий вопрос
+    
     level = levels[level_num]
     q_num = context.user_data['current_question']
     question = DETAILED_QUESTIONS[level][q_num]
-    total = context.user_data['current_level'] * 5 + q_num + 1  # ✅ ИСПРАВЛЕНО
+    total = context.user_data['current_level'] * 5 + q_num + 1
     
     keyboard = [[
         InlineKeyboardButton("1", callback_data='detailed_1'),
@@ -357,7 +396,7 @@ def main():
             STAGE1: [CallbackQueryHandler(stage1_answer, pattern='^stage1_')],
             STAGE2: [
                 CallbackQueryHandler(stage2_answer, pattern='^stage2_'),
-                CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$')  # ✅ ДОБАВЛЕНО
+                CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$')
             ],
             DETAILED_TEST: [CallbackQueryHandler(detailed_answer, pattern='^detailed_')]
         },
@@ -365,7 +404,6 @@ def main():
     )
     
     app.add_handler(conv_handler)
-    # ✅ УДАЛЕНА ДУБЛИРУЮЩАЯ СТРОКА
     
     logger.info("🤖 Бот запущен!")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
