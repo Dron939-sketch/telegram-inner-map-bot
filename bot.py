@@ -10,9 +10,6 @@ HRB, STAGE1, STAGE2, DETAILED_TEST = range(4)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Состояния
-HRB, STAGE1, STAGE2, ЭТАП3, ПОДРОБНОЕ_ТЕСТИРОВАНИЕ = диапазон(4)
-
 # Архетипы
 ARCHETYPES = {
     '1A': {'name': '🛡️ ФИЛОСОФ-ОТШЕЛЬНИК', 'description': 'Вы ищете ответы внутри себя и стремитесь к внутренней гармонии.'},
@@ -91,32 +88,32 @@ DETAILED_QUESTIONS = {
     ]
 }
 
-# Ссылки на сказки в Google Drive
+# Ссылки на сказки в Google Drive (ТВОИ ССЫЛКИ)
 FAIRY_TALES = {
     '1A_МИССИЯ': 'https://drive.google.com/file/d/1WWmcf5t8aaUA_oIl0DR_xN_UKFwbIjp2/view?usp=sharing',
     '1A_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1n39knulPxkqgmlnvuhajAJ_fZLYkq8iE/view?usp=sharing',
-    '1A_ЦЕННОСТИ': 'https://drive.google.com/file/d/1lDSe6Uo3xNvU2dXbSGdWJcTKZHhRZyze/view?usp=sharing',
-    '1A_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1e8NhQPuWUGhxZX2y_gqVOKNQpYqvhqIm/view?usp=sharing',
-    '1A_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1qsHLxwUmCjC3Lxdh6oWMsNQYGFCmVlJi/view?usp=sharing',
-    '1A_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1pNXqVjKzYfhWHXuXVJfVYPJrYRJqfaWt/view?usp=sharing',
-    '1B_МИССИЯ': 'https://drive.google.com/file/d/1rQcWlZJGxJNyLqXqKzXqYzXqYzXqYzXq/view?usp=sharing',
-    '1B_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1sRdXmAKHyKOzMrYrLzYrMzYrMzYrMzYr/view?usp=sharing',
-    '1B_ЦЕННОСТИ': 'https://drive.google.com/file/d/1tSeYnBLIzLPANsZsMzZsNzZsNzZsNzZs/view?usp=sharing',
-    '1B_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1uTfZoCMJAMQBOtAtNzAtOzAtOzAtOzAt/view?usp=sharing',
-    '1B_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1vUgApDNKBNRCPuBuOzBuPzBuPzBuPzBu/view?usp=sharing',
-    '1B_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1wVhBqEOLCOSDQvCvPzCvQzCvQzCvQzCv/view?usp=sharing',
-    '1C_МИССИЯ': 'https://drive.google.com/file/d/1xWiCrFPMDPTERwDwQzDwRzDwRzDwRzDw/view?usp=sharing',
-    '1C_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1yXjDsGQNEQUFSxExRzExSzExSzExSzEx/view?usp=sharing',
-    '1C_ЦЕННОСТИ': 'https://drive.google.com/file/d/1zYkEtHRPFRVGTyFySzFyTzFyTzFyTzFy/view?usp=sharing',
-    '1C_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1AZlFuISQGSWHUzGzTzGzUzGzUzGzUzGz/view?usp=sharing',
-    '1C_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1BAmGvJTRHTXIVAHAUzHAVzHAVzHAVzHA/view?usp=sharing',
-    '1C_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1CBnHwKUSIUYJWBIBVzIBWzIBWzIBWzIB/view?usp=sharing',
-    '1D_МИССИЯ': 'https://drive.google.com/file/d/1DCoIxLVTJVZKXCJCWzJCXzJCXzJCXzJC/view?usp=sharing',
-    '1D_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1EDpJyMWUKWALYDKDXzKDYzKDYzKDYzKD/view?usp=sharing',
-    '1D_ЦЕННОСТИ': 'https://drive.google.com/file/d/1FEqKzNXVLXBMZELEYzLEZzLEZzLEZzLE/view?usp=sharing',
-    '1D_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1GFrLAOYWMYCNAFMFZzMFAzMFAzMFAzMF/view?usp=sharing',
-    '1D_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1HGsMBPZXNZDOBGNGAzNGBzNGBzNGBzNG/view?usp=sharing',
-    '1D_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1IHtNCQAYOAEPCHOHBzOHCzOHCzOHCzOH/view?usp=sharing',
+    '1A_ЦЕННОСТИ': 'https://drive.google.com/file/d/1rv36hmFDKOFB30ba-jETlsREwAIeS1ea/view?usp=sharing',
+    '1A_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1jy2bN6zplfDrUAyGwbB3NwGCmh7qRE3Y/view?usp=sharing',
+    '1A_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1qa4-krpY27m_q4ljtN4yH_TjH8mkp78-/view?usp=sharing',
+    '1A_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1dUcN3FCEtnXjKkzzUtslGbMrxDkcltgQ/view?usp=sharing',
+    '1B_МИССИЯ': 'https://drive.google.com/file/d/1QYVwcl_sWf-Ntpbp5En7lph1Sb-4v6R-/view?usp=sharing',
+    '1B_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1xcm7d8yPNB0e_fFucvVubpsKS6ZP7d-N/view?usp=sharing',
+    '1B_ЦЕННОСТИ': 'https://drive.google.com/file/d/1OX2M-WODASA9RiwTosP97KrnWY-kdAOj/view?usp=sharing',
+    '1B_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1nH8mls_DaiyZlNZU8m4tuS8zKjBYS14o/view?usp=sharing',
+    '1B_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1_0tvaXMgH9aJ2xGM96WFT-14RPYpAlRs/view?usp=sharing',
+    '1B_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1iQKqlR2P_D4Dxqt4kbnRpER9gkgEdKRN/view?usp=sharing',
+    '1C_МИССИЯ': 'https://drive.google.com/file/d/1l1zH2nY4Ogd7QTU-uANU0v5FL6fReiCS/view?usp=sharing',
+    '1C_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1CP9GBpKwVJey8bteztJ0z1nrk8pLChzu/view?usp=sharing',
+    '1C_ЦЕННОСТИ': 'https://drive.google.com/file/d/1ZSMGbKftI6mCIJGhBWEc-q0k8QBqpDAu/view?usp=sharing',
+    '1C_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1UH7uvFvEtJG8h0J_ti0XUrEjprvqQ7bD/view?usp=sharing',
+    '1C_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1JwVoO3MMl8rRaRttqJWqKHepJUdvbGWC/view?usp=sharing',
+    '1C_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/13HRqpPfdToOGZHWodrnNt6xvfuhExRPL/view?usp=sharing',
+    '1D_МИССИЯ': 'https://drive.google.com/file/d/1jpJUSNO5Or2qdx2OxRMgBz2JkmVshlIz/view?usp=sharing',
+    '1D_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1DcaKOKK429QqUVJnlRb6K5fWkkICpJYr/view?usp=sharing',
+    '1D_ЦЕННОСТИ': 'https://drive.google.com/file/d/1oZ5gT9Lh7OWGn8XR9LIrMxPV0z_ZuNnz/view?usp=sharing',
+    '1D_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1uphOmKRdH3ga5sbTN18XlLJg6Gevx77b/view?usp=sharing',
+    '1D_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1ccdEJaLoVxalnPMZPbd8UpqN3DeASGzo/view?usp=sharing',
+    '1D_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1SI8msDuxFRQRuDZouNxoi_jlCvi_FFu7/view?usp=sharing',
 }
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
