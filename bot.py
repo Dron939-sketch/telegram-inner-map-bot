@@ -1,6 +1,5 @@
 import os
 import logging
-import re
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
@@ -13,9 +12,6 @@ logger = logging.getLogger(__name__)
 
 # Токен бота
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-
-# ID папки Google Drive
-GOOGLE_DRIVE_FOLDER = "16zcel9KNI8VMqoMtexwCS5Z0ydN-Qy5T"
 
 # Вопросы базового теста
 BASE_QUESTIONS = [
@@ -211,13 +207,47 @@ LEVEL_NAMES = {
     "environment": "Окружение"
 }
 
+# Словарь с ID файлов сказок
+TALE_FILES = {
+    "1A": {
+        "mission": "1WWmcf5t8aaUA_oIl0DR_xN_UKFwbIjp2",
+        "identity": "1n39knulPxkqgmlnvuhajAJ_fZLYkq8iE",
+        "values": "1rv36hmFDKOFB30ba-jETlsREwAIeS1ea",
+        "abilities": "1jy2bN6zplfDrUAyGwbB3NwGCmh7qRE3Y",
+        "behavior": "1qa4-krpY27m_q4ljtN4yH_TjH8mkp78-",
+        "environment": "1dUcN3FCEtnXjKkzzUtslGbMrxDkcltgQ"
+    },
+    "1B": {
+        "mission": "1QYVwcl_sWf-Ntpbp5En7lph1Sb-4v6R-",
+        "identity": "1xcm7d8yPNB0e_fFucvVubpsKS6ZP7d-N",
+        "values": "1OX2M-WODASA9RiwTosP97KrnWY-kdAOj",
+        "abilities": "1nH8mls_DaiyZlNZU8m4tuS8zKjBYS14o",
+        "behavior": "1_0tvaXMgH9aJ2xGM96WFT-14RPYpAlRs",
+        "environment": "1iQKqlR2P_D4Dxqt4kbnRpER9gkgEdKRN"
+    },
+    "1C": {
+        "mission": "1l1zH2nY4Ogd7QTU-uANU0v5FL6fReiCS",
+        "identity": "1CP9GBpKwVJey8bteztJ0z1nrk8pLChzu",
+        "values": "1ZSMGbKftI6mCIJGhBWEc-q0k8QBqpDAu",
+        "abilities": "1UH7uvFvEtJG8h0J_ti0XUrEjprvqQ7bD",
+        "behavior": "1JwVoO3MMl8rRaRttqJWqKHepJUdvbGWC",
+        "environment": "13HRqpPfdToOGZHWodrnNt6xvfuhExRPL"
+    },
+    "1D": {
+        "mission": "1jpJUSNO5Or2qdx2OxRMgBz2JkmVshlIz",
+        "identity": "1DcaKOKK429QqUVJnlRb6K5fWkkICpJYr",
+        "values": "1oZ5gT9Lh7OWGn8XR9LIrMxPV0z_ZuNnz",
+        "abilities": "1uphOmKRdH3ga5sbTN18XlLJg6Gevx77b",
+        "behavior": "1ccdEJaLoVxalnPMZPbd8UpqN3DeASGzo",
+        "environment": "1SI8msDuxFRQRuDZouNxoi_jlCvi_FFu7"
+    }
+}
+
 # Функция для получения прямой ссылки на файл из Google Drive
 def get_tale_link(archetype, level):
-    """Генерирует ссылку на сказку в Google Drive"""
-    # Формат имени файла: 1A-Миссия.pdf
-    filename = f"{archetype}-{LEVEL_NAMES[level]}.pdf"
-    # Возвращаем ссылку на папку с инструкцией
-    return f"https://drive.google.com/drive/folders/{GOOGLE_DRIVE_FOLDER}\n\n📄 Найдите файл: **{filename}**"
+    """Генерирует прямую ссылку на сказку в Google Drive"""
+    file_id = TALE_FILES[archetype][level]
+    return f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -479,6 +509,7 @@ async def send_tale(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🎭 Архетип: **{ARCHETYPES[archetype]['name']}**
 🎯 Уровень: **{LEVEL_NAMES[problem_level]}**
 
+📖 **Читать сказку:**
 {tale_link}
 
 📚 **Как работать со сказкой:**
