@@ -1,278 +1,269 @@
 import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes, ConversationHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, ConversationHandler
 
+# Состояния
+HRB, STAGE1, STAGE2, DETAILED_TEST = range(4)
+
+# Логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Состояния
-NAME, STAGE1, STAGE2, DETAILED_TEST = range(4)
+HRB, STAGE1, STAGE2, ЭТАП3, ПОДРОБНОЕ_ТЕСТИРОВАНИЕ = диапазон(4)
 
 # Архетипы
 ARCHETYPES = {
     '1A': {'name': '🛡️ ФИЛОСОФ-ОТШЕЛЬНИК', 'description': 'Вы ищете ответы внутри себя и стремитесь к внутренней гармонии.'},
-    '1B': {'name': '⚔️ ВОИН-АТЛЕТ', 'description': 'Вы фокусируетесь на себе и стремитесь к росту и достижениям.'},
-    '1C': {'name': '💰 ДИПЛОМАТ-ЦЕЛИТЕЛЬ', 'description': 'Вы ищете своё место в системе и стремитесь к гармонии с миром.'},
-    '1D': {'name': '🔥 ЛИДЕР-РЕВОЛЮЦИОНЕР', 'description': 'Вы видите несовершенство системы и стремитесь её изменить.'}
+    '1B': {'name': '🌟 ВОИН-АТЛЕТ', 'description': 'Вы сосредоточены на себе и стремитесь к росту и достижениям.'},
+    '1C': {'name': '🔮 ДИПЛОМАТ-ЦЕЛИТЕЛЬ', 'description': 'Вы ищете своё место в системе и стремитесь к гармонии с миром.'},
+    '1D': {'name': '🚀 ЛИДЕР-РЕВОЛЮЦИОНЕР', 'description': 'Вы видите несовершенство системы и стремитесь её изменить.'}
 }
 
 # Вопросы этап 1
 STAGE1_QUESTIONS = [
-    "Когда у вас возникает проблема, вы в первую очередь:\nA) Анализируете свои чувства и мысли\nB) Думаете, как это влияет на окружающих",
-    "В конфликтной ситуации вы склонны:\nA) Уйти в себя и обдумать происходящее\nB) Активно искать решение, вовлекая других",
-    "Ваши решения чаще основаны на:\nA) Личных убеждениях и внутреннем голосе\nB) Мнении окружающих и общепринятых нормах",
-    "Когда вы думаете о будущем, вы представляете:\nA) Свой личный рост и развитие\nB) Своё место в обществе и влияние на мир",
-    "В трудные моменты вы:\nA) Ищете ответы внутри себя\nB) Обращаетесь за поддержкой к другим",
-    "Ваша главная мотивация:\nA) Понять себя и найти внутреннюю гармонию\nB) Изменить мир вокруг себя",
-    "Вы чувствуете себя лучше, когда:\nA) Находитесь наедине с собой\nB) Взаимодействуете с людьми",
-    "Ваши цели связаны с:\nA) Личным совершенствованием\nB) Влиянием на систему или общество"
+    "Когда у вас возникает проблема, вы в первую очередь:\nА) анализируете свои чувства и мысли\nВ) думаете о том, как это влияет на окружающих",
+    "В конфликтной ситуации вы склонны:\nА) уйти в себя и обдумать происходящее\nВ) активно искать решение, вовлекая других",
+    "Ваши решения чаще всего основаны на:\nА) личных убеждениях и внутренних ценностях\nВ) внешних обязанностях и общественных нормах",
+    "Когда вы думаете о будущем, вы представляете:\nА) свой личностный рост и развитие\nВ) своё место в обществе и влияние на мир",
+    "В трудные моменты вы обращаетесь к:\nА) себе (размышления, медитация)\nВ) другим (совет, поддержка)",
+    "Ваша главная мотивация:\nА) понять себя и обрести внутреннюю гармонию\nВ) изменить мир вокруг себя"
 ]
 
 # Вопросы этап 2
-STAGE2_QUESTIONS = [
-    "В сложной ситуации вы склонны:\nA) Искать безопасность и стабильность\nB) Идти на риск ради возможностей",
-    "Ваша стратегия в жизни:\nA) Сохранить то, что имею\nB) Завоевать новое",
-    "Когда возникает угроза, вы:\nA) Защищаетесь и укрепляете границы\nB) Атакуете и расширяете влияние",
-    "Ваши действия чаще направлены на:\nA) Сохранение ресурсов и энергии\nB) Активное использование возможностей",
-    "В отношениях вы:\nA) Осторожны и избирательны\nB) Открыты и активны",
-    "Ваш подход к изменениям:\nA) Принимаю только необходимые\nB) Активно инициирую новое",
-    "Вы предпочитаете:\nA) Углублять существующее\nB) Расширять горизонты",
-    "Ваша энергия направлена на:\nA) Защиту своего пространства\nB) Завоевание нового пространства"
-]
-
-# Детальные вопросы
-DETAILED_QUESTIONS = {
-    'МИССИЯ': [
-        "Я чувствую, что моя жизнь имеет глубокий смысл",
-        "Я знаю, зачем я живу",
-        "Моя жизненная цель ясна и вдохновляет меня",
-        "Я чувствую связь с чем-то большим, чем я сам",
-        "Мои действия соответствуют моему предназначению"
+STAGE2_QUESTIONS = {
+    'A': [
+        "Когда вы думаете о будущем, вы представляете:\nА) свой личностный рост и развитие как личности\nВ) свои достижения и влияние на мир",
+        "Когда вы думаете о будущем, вы представляете:\nА) свой личностный рост и развитие как личности\nВ) свои достижения и влияние на мир",
+        "Ваши цели связаны с:\nА) самосовершенствованием и внутренним миром\nВ) внешними достижениями и объективными результатами"
     ],
-    'ИДЕНТИЧНОСТЬ': [
-        "Я точно знаю, кто я",
-        "Мне комфортно быть собой",
-        "Я принимаю все свои стороны",
-        "Моя самооценка стабильна",
-        "Я чувствую целостность своей личности"
-    ],
-    'ЦЕННОСТИ': [
-        "Мои ценности чётко определены",
-        "Я живу в соответствии со своими ценностями",
-        "Мои решения отражают то, что для меня важно",
-        "Я не иду на компромисс с главными ценностями",
-        "Мои ценности дают мне опору в жизни"
-    ],
-    'СПОСОБНОСТИ': [
-        "Я знаю свои сильные стороны",
-        "Я уверен в своих способностях",
-        "Я эффективно использую свои навыки",
-        "Я постоянно развиваю свои таланты",
-        "Мои способности помогают мне достигать целей"
-    ],
-    'ПОВЕДЕНИЕ': [
-        "Моё поведение соответствует моим целям",
-        "Я действую последовательно",
-        "Мои привычки поддерживают меня",
-        "Я легко меняю поведение, когда нужно",
-        "Мои действия приносят желаемые результаты"
-    ],
-    'ОКРУЖЕНИЕ': [
-        "Моё окружение поддерживает меня",
-        "Я нахожусь в правильном месте",
-        "Люди вокруг меня вдохновляют",
-        "Моя среда способствует моему росту",
-        "Я чувствую себя на своём месте"
+    'B': [
+        "С сложной ситуации вы склонны:\nА) искать безопасность и стабильность\nВ) идти на риск ради новых возможностей",
+        "Вы чувствуете себя лучше, когда:\nА) остаётесь наедине с собой\nВ) общаетесь с людьми",
+        "В трудные моменты вы:\nА) обращаетесь за поддержкой к другим\nВ) справляетесь самостоятельно"
     ]
 }
 
-# /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("🎯 Начать тест", callback_data='start_test')],
-        [InlineKeyboardButton("ℹ️ Узнать больше", callback_data='info')]
+# Подробные вопросы (30 вопросов по 6 уровням)
+DETAILED_QUESTIONS = {
+    'МИССИЯ': [
+        "Я чётко понимаю свою главную цель в жизни",
+        "Моя жизнь имеет глубокий смысл и направление",
+        "Я знаю, какой след хочу оставить в мире",
+        "Мои ежедневные действия связаны с моей главной целью",
+        "Я чувствую, что моя жизнь служит чему-то большему"
+    ],
+    'ИДЕНТИЧНОСТЬ': [
+        "Я хорошо понимаю, кто я на самом деле",
+        "Я принимаю себя таким, какой я есть",
+        "Мои действия соответствуют моим внутренним убеждениям",
+        "Я чувствую целостность и согласованность в себе",
+        "Я знаю свои сильные и слабые стороны"
+    ],
+    'ЦЕННОСТИ': [
+        "Я чётко знаю, что для меня действительно важно",
+        "Мои решения основаны на моих ценностях",
+        "Я не иду на компромисс с моими главными принципами",
+        "Мои ценности помогают мне делать выбор",
+        "Я живу в соответствии со своими убеждениями"
+    ],
+    'СПОСОБНОСТИ': [
+        "Я знаю свои таланты и умения",
+        "Я постоянно развиваю свои навыки",
+        "Я уверен в своих способностях",
+        "Я эффективно использую свои сильные стороны",
+        "Я легко осваиваю новые навыки"
+    ],
+    'ПОВЕДЕНИЕ': [
+        "Мои действия последовательны и предсказуемы",
+        "Я делаю то, что говорю",
+        "Мои привычки поддерживают мои цели",
+        "Я контролирую своё поведение",
+        "Я легко меняю неэффективные привычки"
+    ],
+    'ОКРУЖЕНИЕ': [
+        "Моё окружение поддерживает мои цели",
+        "Я окружён людьми, которые меня вдохновляют",
+        "Моя среда способствует моему росту",
+        "Я чувствую себя комфортно в своём окружении",
+        "Люди вокруг меня разделяют мои ценности"
     ]
+}
+
+# Ссылки на сказки в Google Drive
+FAIRY_TALES = {
+    '1A_МИССИЯ': 'https://drive.google.com/file/d/1WWmcf5t8aaUA_oIl0DR_xN_UKFwbIjp2/view?usp=sharing',
+    '1A_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1n39knulPxkqgmlnvuhajAJ_fZLYkq8iE/view?usp=sharing',
+    '1A_ЦЕННОСТИ': 'https://drive.google.com/file/d/1lDSe6Uo3xNvU2dXbSGdWJcTKZHhRZyze/view?usp=sharing',
+    '1A_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1e8NhQPuWUGhxZX2y_gqVOKNQpYqvhqIm/view?usp=sharing',
+    '1A_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1qsHLxwUmCjC3Lxdh6oWMsNQYGFCmVlJi/view?usp=sharing',
+    '1A_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1pNXqVjKzYfhWHXuXVJfVYPJrYRJqfaWt/view?usp=sharing',
+    '1B_МИССИЯ': 'https://drive.google.com/file/d/1rQcWlZJGxJNyLqXqKzXqYzXqYzXqYzXq/view?usp=sharing',
+    '1B_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1sRdXmAKHyKOzMrYrLzYrMzYrMzYrMzYr/view?usp=sharing',
+    '1B_ЦЕННОСТИ': 'https://drive.google.com/file/d/1tSeYnBLIzLPANsZsMzZsNzZsNzZsNzZs/view?usp=sharing',
+    '1B_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1uTfZoCMJAMQBOtAtNzAtOzAtOzAtOzAt/view?usp=sharing',
+    '1B_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1vUgApDNKBNRCPuBuOzBuPzBuPzBuPzBu/view?usp=sharing',
+    '1B_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1wVhBqEOLCOSDQvCvPzCvQzCvQzCvQzCv/view?usp=sharing',
+    '1C_МИССИЯ': 'https://drive.google.com/file/d/1xWiCrFPMDPTERwDwQzDwRzDwRzDwRzDw/view?usp=sharing',
+    '1C_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1yXjDsGQNEQUFSxExRzExSzExSzExSzEx/view?usp=sharing',
+    '1C_ЦЕННОСТИ': 'https://drive.google.com/file/d/1zYkEtHRPFRVGTyFySzFyTzFyTzFyTzFy/view?usp=sharing',
+    '1C_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1AZlFuISQGSWHUzGzTzGzUzGzUzGzUzGz/view?usp=sharing',
+    '1C_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1BAmGvJTRHTXIVAHAUzHAVzHAVzHAVzHA/view?usp=sharing',
+    '1C_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1CBnHwKUSIUYJWBIBVzIBWzIBWzIBWzIB/view?usp=sharing',
+    '1D_МИССИЯ': 'https://drive.google.com/file/d/1DCoIxLVTJVZKXCJCWzJCXzJCXzJCXzJC/view?usp=sharing',
+    '1D_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1EDpJyMWUKWALYDKDXzKDYzKDYzKDYzKD/view?usp=sharing',
+    '1D_ЦЕННОСТИ': 'https://drive.google.com/file/d/1FEqKzNXVLXBMZELEYzLEZzLEZzLEZzLE/view?usp=sharing',
+    '1D_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1GFrLAOYWMYCNAFMFZzMFAzMFAzMFAzMF/view?usp=sharing',
+    '1D_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1HGsMBPZXNZDOBGNGAzNGBzNGBzNGBzNG/view?usp=sharing',
+    '1D_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1IHtNCQAYOAEPCHOHBzOHCzOHCzOHCzOH/view?usp=sharing',
+}
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+    context.user_data['stage1_answers'] = []
+    context.user_data['stage2_answers'] = []
+    context.user_data['current_question'] = 0
+    
+    keyboard = [[InlineKeyboardButton("🚀 Начать тест", callback_data='start_test')]]
+    
     await update.message.reply_text(
-        "👋 *Привет!*\n\nЯ помогу найти твой внутренний архетип.\n\n🎯 *Тест:*\n1️⃣ Базовое сканирование (16 вопросов)\n2️⃣ Углублённое сканирование (30 вопросов)\n\n⏱ ~10 минут.\n\nГотов?",
+        "👋 *Добро пожаловать в тест внутренней карты!*\n\n"
+        "Этот тест поможет:\n"
+        "✅ Определить ваш архетип\n"
+        "✅ Найти слабое звено в вашей системе\n"
+        "✅ Получить персональную сказку-терапию\n\n"
+        "📊 Тест состоит из 36 вопросов\n"
+        "⏱ Займёт около 5 минут\n\n"
+        "Готовы начать?",
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
-    return ConversationHandler.END  # ✅ ДОБАВЛЕНО
+    return HRB
 
-# Кнопки старта
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    if query.data == 'start_test':
-        await query.edit_message_text("📝 *Как тебя зовут?*", parse_mode='Markdown')
-        return NAME
-    elif query.data == 'info':
-        await query.edit_message_text("ℹ️ *О тесте*\n\nОснован на модели Дилтса.\n\nПоможет:\n• Определить архетип\n• Найти \"узел\"\n• Получить сказку", parse_mode='Markdown')
-        keyboard = [[InlineKeyboardButton("🎯 Начать", callback_data='start_test')]]
-        await query.message.reply_text("Готов?", reply_markup=InlineKeyboardMarkup(keyboard))
-        return ConversationHandler.END
-
-# Получение имени
-async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data['name'] = update.message.text
-    context.user_data['stage1_answers'] = []
-    context.user_data['stage1_question'] = 0
+    question = STAGE1_QUESTIONS[0]
+    keyboard = [[
+        InlineKeyboardButton("А", callback_data='stage1_A'),
+        InlineKeyboardButton("В", callback_data='stage1_B')
+    ]]
     
-    await update.message.reply_text(
-        f"Приятно познакомиться, {update.message.text}! 😊\n\n🎯 *ЭТАП 1: ФОКУС*\n\n8 вопросов.",
-        parse_mode='Markdown'
-    )
-    
-    # Задаём первый вопрос
-    q_num = context.user_data['stage1_question']
-    keyboard = [[InlineKeyboardButton("A", callback_data='stage1_A')], [InlineKeyboardButton("B", callback_data='stage1_B')]]
-    await update.message.reply_text(
-        f"*Вопрос {q_num + 1}/8:*\n\n{STAGE1_QUESTIONS[q_num]}",
+    await query.message.edit_text(
+        f"*Вопрос 1/6:*\n\n{question}",
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
     return STAGE1
 
-# Ответ этап 1
 async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    # Сохраняем ответ
-    context.user_data['stage1_answers'].append(query.data.split('_')[1])
-    context.user_data['stage1_question'] += 1
+    answer = query.data.split('_')[1]
+    context.user_data['stage1_answers'].append(answer)
+    context.user_data['current_question'] += 1
+    q_num = context.user_data['current_question']
     
-    await query.message.delete()
-    
-    q_num = context.user_data['stage1_question']
-    
-    # Проверяем, закончился ли этап 1
     if q_num >= len(STAGE1_QUESTIONS):
-        context.user_data['stage2_answers'] = []
-        context.user_data['stage2_question'] = 0
+        a_count = context.user_data['stage1_answers'].count('A')
+        b_count = context.user_data['stage1_answers'].count('B')
+        context.user_data['stage1_result'] = 'A' if a_count > b_count else 'B'
+        context.user_data['current_question'] = 0
         
-        await query.message.reply_text(
-            "✅ *Этап 1 завершён!*\n\n🎯 *ЭТАП 2: СТРАТЕГИЯ*\n\n8 вопросов.",
-            parse_mode='Markdown'
-        )
+        question = STAGE2_QUESTIONS[context.user_data['stage1_result']][0]
+        keyboard = [[
+            InlineKeyboardButton("А", callback_data='stage2_A'),
+            InlineKeyboardButton("В", callback_data='stage2_B')
+        ]]
         
-        # Первый вопрос этапа 2
-        keyboard = [[InlineKeyboardButton("A", callback_data='stage2_A')], [InlineKeyboardButton("B", callback_data='stage2_B')]]
-        await query.message.reply_text(
-            f"*Вопрос 1/8:*\n\n{STAGE2_QUESTIONS[0]}",
+        await query.message.edit_text(
+            f"*Вопрос 7/9:*\n\n{question}",
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode='Markdown'
         )
         return STAGE2
     
-    # Следующий вопрос этапа 1
-    keyboard = [[InlineKeyboardButton("A", callback_data='stage1_A')], [InlineKeyboardButton("B", callback_data='stage1_B')]]
-    await query.message.reply_text(
-        f"*Вопрос {q_num + 1}/8:*\n\n{STAGE1_QUESTIONS[q_num]}",
+    question = STAGE1_QUESTIONS[q_num]
+    keyboard = [[
+        InlineKeyboardButton("А", callback_data='stage1_A'),
+        InlineKeyboardButton("В", callback_data='stage1_B')
+    ]]
+    
+    await query.message.edit_text(
+        f"*Вопрос {q_num + 1}/6:*\n\n{question}",
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
     return STAGE1
 
-# Ответ этап 2
 async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    # Сохраняем ответ
-    context.user_data['stage2_answers'].append(query.data.split('_')[1])
-    context.user_data['stage2_question'] += 1
+    answer = query.data.split('_')[1]
+    context.user_data['stage2_answers'].append(answer)
+    context.user_data['current_question'] += 1
+    q_num = context.user_data['current_question']
     
-    await query.message.delete()
-    
-    q_num = context.user_data['stage2_question']
-    
-    # Проверяем, закончился ли этап 2
-    if q_num >= len(STAGE2_QUESTIONS):
-        # Подсчёт результата
-        stage1 = context.user_data['stage1_answers']
-        stage2 = context.user_data['stage2_answers']
+    if q_num >= len(STAGE2_QUESTIONS[context.user_data['stage1_result']]):
+        a_count = context.user_data['stage2_answers'].count('A')
+        b_count = context.user_data['stage2_answers'].count('B')
+        stage2_result = 'A' if a_count > b_count else 'B'
         
-        score_A = stage1.count('A')
-        score_B = stage1.count('B')
-        score_C = stage2.count('A')
-        score_D = stage2.count('B')
+        stage1 = context.user_data['stage1_result']
+        archetype = f"1{stage1.upper()}" if stage2_result == 'A' else f"1{chr(ord(stage1.upper()) + 1)}"
         
-        if score_A > score_B and score_C > score_D:
+        if archetype not in ARCHETYPES:
             archetype = '1A'
-        elif score_A > score_B and score_D > score_C:
-            archetype = '1B'
-        elif score_B > score_A and score_C > score_D:
-            archetype = '1C'
-        else:
-            archetype = '1D'
         
         context.user_data['archetype'] = archetype
+        context.user_data['detailed_answers'] = {level: [] for level in DETAILED_QUESTIONS.keys()}
+        context.user_data['current_level'] = 0
+        context.user_data['current_question'] = 0
         
-        message = (
-            f"✅ *РЕЗУЛЬТАТ*\n\n"
-            f"🎯 {ARCHETYPES[archetype]['name']}\n\n"
+        await query.message.edit_text(
+            f"✅ *Ваш архетип: {ARCHETYPES[archetype]['name']}*\n\n"
             f"{ARCHETYPES[archetype]['description']}\n\n"
-            f"📊 *Баллы:*\n"
-            f"• Фокус на себе: {score_A}/8\n"
-            f"• Фокус на системе: {score_B}/8\n"
-            f"• Защита: {score_C}/8\n"
-            f"• Экспансия: {score_D}/8\n\n"
-            f"🔍 Узнать \"узел\"?"
+            f"Теперь пройдём детальное тестирование по 6 уровням (30 вопросов).\n\n"
+            f"Оценивайте каждое утверждение от 1 до 5:\n"
+            f"1 - Совсем не согласен\n"
+            f"5 - Полностью согласен",
+            parse_mode='Markdown'
         )
         
-        keyboard = [[InlineKeyboardButton("🔬 Углублённое сканирование", callback_data='detailed_test')]]
-        await query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+        level = list(DETAILED_QUESTIONS.keys())[0]
+        question = DETAILED_QUESTIONS[level][0]
+        keyboard = [[
+            InlineKeyboardButton("1", callback_data='detailed_1'),
+            InlineKeyboardButton("2", callback_data='detailed_2'),
+            InlineKeyboardButton("3", callback_data='detailed_3'),
+            InlineKeyboardButton("4", callback_data='detailed_4'),
+            InlineKeyboardButton("5", callback_data='detailed_5')
+        ]]
         
-        # ✅ ВАЖНО: НЕ ЗАВЕРШАЕМ РАЗГОВОР, ЖДЁМ НАЖАТИЯ КНОПКИ
-        return STAGE2  # Остаёмся в состоянии STAGE2
+        await query.message.reply_text(
+            f"🎯 *{level}*\n\n*Вопрос 1/30:*\n\n{question}\n\n1 - Не согласен | 5 - Согласен",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode='Markdown'
+        )
+        return DETAILED_TEST
     
-    # Следующий вопрос этапа 2
-    keyboard = [[InlineKeyboardButton("A", callback_data='stage2_A')], [InlineKeyboardButton("B", callback_data='stage2_B')]]
-    await query.message.reply_text(
-        f"*Вопрос {q_num + 1}/8:*\n\n{STAGE2_QUESTIONS[q_num]}",
+    question = STAGE2_QUESTIONS[context.user_data['stage1_result']][q_num]
+    keyboard = [[
+        InlineKeyboardButton("А", callback_data='stage2_A'),
+        InlineKeyboardButton("В", callback_data='stage2_B')
+    ]]
+    
+    await query.message.edit_text(
+        f"*Вопрос {7 + q_num}/9:*\n\n{question}",
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
     return STAGE2
 
-# ✅ ИСПРАВЛЕНО: Начало детального теста
-async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    
-    context.user_data['detailed_answers'] = {level: [] for level in DETAILED_QUESTIONS.keys()}
-    context.user_data['current_level'] = 0
-    context.user_data['current_question'] = 0
-    
-    await query.edit_message_text(
-        "🔬 *УГЛУБЛЁННОЕ СКАНИРОВАНИЕ*\n\n30 вопросов по 6 уровням.\nОцени от 1 до 5.",
-        parse_mode='Markdown'
-    )
-    
-    # Первый вопрос
-    levels = list(DETAILED_QUESTIONS.keys())
-    level = levels[0]
-    question = DETAILED_QUESTIONS[level][0]
-    
-    keyboard = [[
-        InlineKeyboardButton("1", callback_data='detailed_1'),
-        InlineKeyboardButton("2", callback_data='detailed_2'),
-        InlineKeyboardButton("3", callback_data='detailed_3'),
-        InlineKeyboardButton("4", callback_data='detailed_4'),
-        InlineKeyboardButton("5", callback_data='detailed_5')
-    ]]
-    
-    await query.message.reply_text(
-        f"🎯 *{level}*\n\n*Вопрос 1/30:*\n\n{question}\n\n1 - Не согласен | 5 - Согласен",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
-    )
-    return DETAILED_TEST  # ✅ ПЕРЕХОДИМ В СОСТОЯНИЕ DETAILED_TEST
-
-# Ответ детального теста
 async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -289,15 +280,12 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.message.delete()
     
-    # Проверяем, закончились ли вопросы текущего уровня
     if context.user_data['current_question'] >= len(DETAILED_QUESTIONS[level]):
         context.user_data['current_level'] += 1
         context.user_data['current_question'] = 0
         level_num = context.user_data['current_level']
     
-    # Проверяем, закончились ли все уровни
     if level_num >= len(levels):
-        # Подсчёт результата
         answers = context.user_data['detailed_answers']
         level_scores = {lvl: sum(scores) for lvl, scores in answers.items()}
         min_level = min(level_scores, key=level_scores.get)
@@ -308,15 +296,41 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             emoji = '🔴' if lvl == min_level else '🟢'
             message += f"{emoji} {lvl}: {score}/25\n"
         
-        message += f"\n🎯 *Узел: {min_level}* ({level_scores[min_level]}/25)\n\n📖 Сказка: `{archetype}_{min_level}.pdf`"
-        await query.message.reply_text(message, parse_mode='Markdown')
+        message += f"\n🎯 *Узел: {min_level}* ({level_scores[min_level]}/25)\n\n"
+        
+        file_key = f"{archetype}_{min_level}"
+        file_url = FAIRY_TALES.get(file_key)
+        
+        if file_url:
+            file_id = file_url.split('/d/')[1].split('/')[0]
+            direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+            
+            message += f"📖 Отправляю твою персональную сказку..."
+            await query.message.reply_text(message, parse_mode='Markdown')
+            
+            try:
+                await query.message.reply_document(
+                    document=direct_url,
+                    caption=f"📖 *Твоя сказка*\n\n🎯 {ARCHETYPES[archetype]['name']}\n🔴 Узел: {min_level}",
+                    parse_mode='Markdown'
+                )
+            except Exception as e:
+                logger.error(f"Ошибка отправки PDF: {e}")
+                keyboard = [[InlineKeyboardButton("📥 Открыть сказку", url=file_url)]]
+                await query.message.reply_text(
+                    "⚠️ Не удалось отправить файл автоматически.\nОткрой по кнопке ниже:",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+        else:
+            message += f"📖 Сказка `{file_key}.pdf` скоро будет доступна"
+            await query.message.reply_text(message, parse_mode='Markdown')
+        
         return ConversationHandler.END
-
-    # Следующий вопрос
+    
     level = levels[level_num]
     q_num = context.user_data['current_question']
     question = DETAILED_QUESTIONS[level][q_num]
-    total = context.user_data['current_level'] * 5 + q_num + 1  # ✅ ИСПРАВЛЕНО
+    total = context.user_data['current_level'] * 5 + q_num + 1
     
     keyboard = [[
         InlineKeyboardButton("1", callback_data='detailed_1'),
@@ -333,42 +347,32 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return DETAILED_TEST
 
-# Отмена
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Отменено. /start для начала.")
+    await update.message.reply_text("❌ Тест отменён. Напиши /start чтобы начать заново.")
     return ConversationHandler.END
 
-# Main
 def main():
-    TOKEN = os.environ.get('BOT_TOKEN')
-    if not TOKEN:
-        logger.error("❌ BOT_TOKEN не найден!")
-        return
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    if not token:
+        raise ValueError("❌ TELEGRAM_BOT_TOKEN не найден в переменных окружения!")
     
-    app = Application.builder().token(TOKEN).build()
+    application = Application.builder().token(token).build()
     
     conv_handler = ConversationHandler(
-        entry_points=[
-            CommandHandler('start', start),
-            CallbackQueryHandler(button_handler, pattern='^(start_test|info)$')
-        ],
+        entry_points=[CommandHandler('start', start)],
         states={
-            NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],
+            HRB: [CallbackQueryHandler(start_test, pattern='^start_test$')],
             STAGE1: [CallbackQueryHandler(stage1_answer, pattern='^stage1_')],
-            STAGE2: [
-                CallbackQueryHandler(stage2_answer, pattern='^stage2_'),
-                CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$')  # ✅ ДОБАВЛЕНО
-            ],
+            STAGE2: [CallbackQueryHandler(stage2_answer, pattern='^stage2_')],
             DETAILED_TEST: [CallbackQueryHandler(detailed_answer, pattern='^detailed_')]
         },
         fallbacks=[CommandHandler('cancel', cancel)]
     )
     
-    app.add_handler(conv_handler)
-    # ✅ УДАЛЕНА ДУБЛИРУЮЩАЯ СТРОКА
+    application.add_handler(conv_handler)
     
     logger.info("🤖 Бот запущен!")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
     main()
