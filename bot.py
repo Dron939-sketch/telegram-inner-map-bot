@@ -1,354 +1,462 @@
 import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, ConversationHandler
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    ConversationHandler,
+    ContextTypes,
+)
 
-# Состояния
-HRB, STAGE1, STAGE2, DETAILED_TEST = range(4)
-
-# Логирование
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# Настройка логирования
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
-# Архетипы
-ARCHETYPES = {
-    '1A': {'name': '🛡️ ФИЛОСОФ-ОТШЕЛЬНИК', 'description': 'Вы ищете ответы внутри себя и стремитесь к внутренней гармонии.'},
-    '1B': {'name': '🌟 ВОИН-АТЛЕТ', 'description': 'Вы сосредоточены на себе и стремитесь к росту и достижениям.'},
-    '1C': {'name': '🔮 ДИПЛОМАТ-ЦЕЛИТЕЛЬ', 'description': 'Вы ищете своё место в системе и стремитесь к гармонии с миром.'},
-    '1D': {'name': '🚀 ЛИДЕР-РЕВОЛЮЦИОНЕР', 'description': 'Вы видите несовершенство системы и стремитесь её изменить.'}
-}
+# Состояния разговора
+HRB, STAGE1, STAGE2, DETAILED_TEST = range(4)
 
-# Вопросы этап 1
+# Вопросы для первого этапа (ХРБ)
 STAGE1_QUESTIONS = [
-    "Когда у вас возникает проблема, вы в первую очередь:\nА) анализируете свои чувства и мысли\nВ) думаете о том, как это влияет на окружающих",
-    "В конфликтной ситуации вы склонны:\nА) уйти в себя и обдумать происходящее\nВ) активно искать решение, вовлекая других",
-    "Ваши решения чаще всего основаны на:\nА) личных убеждениях и внутренних ценностях\nВ) внешних обязанностях и общественных нормах",
-    "Когда вы думаете о будущем, вы представляете:\nА) свой личностный рост и развитие\nВ) своё место в обществе и влияние на мир",
-    "В трудные моменты вы обращаетесь к:\nА) себе (размышления, медитация)\nВ) другим (совет, поддержка)",
-    "Ваша главная мотивация:\nА) понять себя и обрести внутреннюю гармонию\nВ) изменить мир вокруг себя"
+    {
+        'text': '1. Вам нравится работать с людьми?',
+        'options': [
+            ('Да, очень нравится', 5),
+            ('Скорее да', 3),
+            ('Не знаю', 0),
+            ('Скорее нет', -3),
+            ('Нет, не нравится', -5)
+        ]
+    },
+    {
+        'text': '2. Вы предпочитаете работать с данными и цифрами?',
+        'options': [
+            ('Да, очень нравится', 5),
+            ('Скорее да', 3),
+            ('Не знаю', 0),
+            ('Скорее нет', -3),
+            ('Нет, не нравится', -5)
+        ]
+    },
+    {
+        'text': '3. Вам интересно создавать что-то своими руками?',
+        'options': [
+            ('Да, очень интересно', 5),
+            ('Скорее да', 3),
+            ('Не знаю', 0),
+            ('Скорее нет', -3),
+            ('Нет, не интересно', -5)
+        ]
+    },
+    {
+        'text': '4. Вы любите исследовать и анализировать?',
+        'options': [
+            ('Да, очень люблю', 5),
+            ('Скорее да', 3),
+            ('Не знаю', 0),
+            ('Скорее нет', -3),
+            ('Нет, не люблю', -5)
+        ]
+    },
+    {
+        'text': '5. Вам нравится творческая работа?',
+        'options': [
+            ('Да, очень нравится', 5),
+            ('Скорее да', 3),
+            ('Не знаю', 0),
+            ('Скорее нет', -3),
+            ('Нет, не нравится', -5)
+        ]
+    }
 ]
 
-# Вопросы этап 2
-STAGE2_QUESTIONS = {
-    'A': [
-        "Когда вы думаете о будущем, вы представляете:\nА) свой личностный рост и развитие как личности\nВ) свои достижения и влияние на мир",
-        "Когда вы думаете о будущем, вы представляете:\nА) свой личностный рост и развитие как личности\nВ) свои достижения и влияние на мир",
-        "Ваши цели связаны с:\nА) самосовершенствованием и внутренним миром\nВ) внешними достижениями и объективными результатами"
-    ],
-    'B': [
-        "С сложной ситуации вы склонны:\nА) искать безопасность и стабильность\nВ) идти на риск ради новых возможностей",
-        "Вы чувствуете себя лучше, когда:\nА) остаётесь наедине с собой\nВ) общаетесь с людьми",
-        "В трудные моменты вы:\nА) обращаетесь за поддержкой к другим\nВ) справляетесь самостоятельно"
-    ]
-}
+# Вопросы для второго этапа
+STAGE2_QUESTIONS = [
+    {
+        'text': '6. Как вы относитесь к рутинной работе?',
+        'options': [
+            ('Положительно, мне нравится стабильность', 5),
+            ('Нейтрально', 0),
+            ('Отрицательно, предпочитаю разнообразие', -5)
+        ]
+    },
+    {
+        'text': '7. Вы предпочитаете работать в команде или индивидуально?',
+        'options': [
+            ('В команде', 5),
+            ('Зависит от ситуации', 0),
+            ('Индивидуально', -5)
+        ]
+    },
+    {
+        'text': '8. Насколько важна для вас высокая зарплата?',
+        'options': [
+            ('Очень важна', 5),
+            ('Важна, но не главное', 3),
+            ('Не очень важна', -3)
+        ]
+    }
+]
 
-# Подробные вопросы (30 вопросов по 6 уровням)
+# Детальный тест по типам Холланда
 DETAILED_QUESTIONS = {
-    'МИССИЯ': [
-        "Я чётко понимаю свою главную цель в жизни",
-        "Моя жизнь имеет глубокий смысл и направление",
-        "Я знаю, какой след хочу оставить в мире",
-        "Мои ежедневные действия связаны с моей главной целью",
-        "Я чувствую, что моя жизнь служит чему-то большему"
+    'realistic': [
+        'Вам нравится работать с инструментами и механизмами?',
+        'Вы предпочитаете физическую активность умственной?',
+        'Вам интересна работа на открытом воздухе?'
     ],
-    'ИДЕНТИЧНОСТЬ': [
-        "Я хорошо понимаю, кто я на самом деле",
-        "Я принимаю себя таким, какой я есть",
-        "Мои действия соответствуют моим внутренним убеждениям",
-        "Я чувствую целостность и согласованность в себе",
-        "Я знаю свои сильные и слабые стороны"
+    'investigative': [
+        'Вам нравится решать сложные задачи?',
+        'Вы любите проводить исследования?',
+        'Вам интересна научная деятельность?'
     ],
-    'ЦЕННОСТИ': [
-        "Я чётко знаю, что для меня действительно важно",
-        "Мои решения основаны на моих ценностях",
-        "Я не иду на компромисс с моими главными принципами",
-        "Мои ценности помогают мне делать выбор",
-        "Я живу в соответствии со своими убеждениями"
+    'artistic': [
+        'Вам нравится создавать что-то новое и оригинальное?',
+        'Вы цените красоту и эстетику?',
+        'Вам интересна творческая работа?'
     ],
-    'СПОСОБНОСТИ': [
-        "Я знаю свои таланты и умения",
-        "Я постоянно развиваю свои навыки",
-        "Я уверен в своих способностях",
-        "Я эффективно использую свои сильные стороны",
-        "Я легко осваиваю новые навыки"
+    'social': [
+        'Вам нравится помогать другим людям?',
+        'Вы легко находите общий язык с людьми?',
+        'Вам интересна работа в сфере образования или здравоохранения?'
     ],
-    'ПОВЕДЕНИЕ': [
-        "Мои действия последовательны и предсказуемы",
-        "Я делаю то, что говорю",
-        "Мои привычки поддерживают мои цели",
-        "Я контролирую своё поведение",
-        "Я легко меняю неэффективные привычки"
+    'enterprising': [
+        'Вам нравится руководить и организовывать?',
+        'Вы готовы рисковать ради успеха?',
+        'Вам интересна предпринимательская деятельность?'
     ],
-    'ОКРУЖЕНИЕ': [
-        "Моё окружение поддерживает мои цели",
-        "Я окружён людьми, которые меня вдохновляют",
-        "Моя среда способствует моему росту",
-        "Я чувствую себя комфортно в своём окружении",
-        "Люди вокруг меня разделяют мои ценности"
+    'conventional': [
+        'Вам нравится работать с документами и данными?',
+        'Вы цените порядок и систематичность?',
+        'Вам комфортно следовать установленным правилам?'
     ]
 }
 
-# Ссылки на сказки в Google Drive (ТВОИ ССЫЛКИ)
-FAIRY_TALES = {
-    '1A_МИССИЯ': 'https://drive.google.com/file/d/1WWmcf5t8aaUA_oIl0DR_xN_UKFwbIjp2/view?usp=sharing',
-    '1A_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1n39knulPxkqgmlnvuhajAJ_fZLYkq8iE/view?usp=sharing',
-    '1A_ЦЕННОСТИ': 'https://drive.google.com/file/d/1rv36hmFDKOFB30ba-jETlsREwAIeS1ea/view?usp=sharing',
-    '1A_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1jy2bN6zplfDrUAyGwbB3NwGCmh7qRE3Y/view?usp=sharing',
-    '1A_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1qa4-krpY27m_q4ljtN4yH_TjH8mkp78-/view?usp=sharing',
-    '1A_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1dUcN3FCEtnXjKkzzUtslGbMrxDkcltgQ/view?usp=sharing',
-    '1B_МИССИЯ': 'https://drive.google.com/file/d/1QYVwcl_sWf-Ntpbp5En7lph1Sb-4v6R-/view?usp=sharing',
-    '1B_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1xcm7d8yPNB0e_fFucvVubpsKS6ZP7d-N/view?usp=sharing',
-    '1B_ЦЕННОСТИ': 'https://drive.google.com/file/d/1OX2M-WODASA9RiwTosP97KrnWY-kdAOj/view?usp=sharing',
-    '1B_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1nH8mls_DaiyZlNZU8m4tuS8zKjBYS14o/view?usp=sharing',
-    '1B_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1_0tvaXMgH9aJ2xGM96WFT-14RPYpAlRs/view?usp=sharing',
-    '1B_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1iQKqlR2P_D4Dxqt4kbnRpER9gkgEdKRN/view?usp=sharing',
-    '1C_МИССИЯ': 'https://drive.google.com/file/d/1l1zH2nY4Ogd7QTU-uANU0v5FL6fReiCS/view?usp=sharing',
-    '1C_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1CP9GBpKwVJey8bteztJ0z1nrk8pLChzu/view?usp=sharing',
-    '1C_ЦЕННОСТИ': 'https://drive.google.com/file/d/1ZSMGbKftI6mCIJGhBWEc-q0k8QBqpDAu/view?usp=sharing',
-    '1C_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1UH7uvFvEtJG8h0J_ti0XUrEjprvqQ7bD/view?usp=sharing',
-    '1C_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1JwVoO3MMl8rRaRttqJWqKHepJUdvbGWC/view?usp=sharing',
-    '1C_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/13HRqpPfdToOGZHWodrnNt6xvfuhExRPL/view?usp=sharing',
-    '1D_МИССИЯ': 'https://drive.google.com/file/d/1jpJUSNO5Or2qdx2OxRMgBz2JkmVshlIz/view?usp=sharing',
-    '1D_ИДЕНТИЧНОСТЬ': 'https://drive.google.com/file/d/1DcaKOKK429QqUVJnlRb6K5fWkkICpJYr/view?usp=sharing',
-    '1D_ЦЕННОСТИ': 'https://drive.google.com/file/d/1oZ5gT9Lh7OWGn8XR9LIrMxPV0z_ZuNnz/view?usp=sharing',
-    '1D_СПОСОБНОСТИ': 'https://drive.google.com/file/d/1uphOmKRdH3ga5sbTN18XlLJg6Gevx77b/view?usp=sharing',
-    '1D_ПОВЕДЕНИЕ': 'https://drive.google.com/file/d/1ccdEJaLoVxalnPMZPbd8UpqN3DeASGzo/view?usp=sharing',
-    '1D_ОКРУЖЕНИЕ': 'https://drive.google.com/file/d/1SI8msDuxFRQRuDZouNxoi_jlCvi_FFu7/view?usp=sharing',
+# Профессии по типам Холланда
+PROFESSIONS = {
+    'realistic': [
+        'Инженер',
+        'Механик',
+        'Электрик',
+        'Строитель',
+        'Водитель',
+        'Фермер'
+    ],
+    'investigative': [
+        'Учёный',
+        'Программист',
+        'Аналитик',
+        'Исследователь',
+        'Врач',
+        'Химик'
+    ],
+    'artistic': [
+        'Дизайнер',
+        'Художник',
+        'Музыкант',
+        'Писатель',
+        'Актёр',
+        'Фотограф'
+    ],
+    'social': [
+        'Учитель',
+        'Психолог',
+        'Социальный работник',
+        'Медсестра',
+        'Консультант',
+        'Тренер'
+    ],
+    'enterprising': [
+        'Менеджер',
+        'Предприниматель',
+        'Продавец',
+        'Маркетолог',
+        'Юрист',
+        'Политик'
+    ],
+    'conventional': [
+        'Бухгалтер',
+        'Секретарь',
+        'Библиотекарь',
+        'Администратор',
+        'Экономист',
+        'Банковский служащий'
+    ]
 }
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data.clear()
-    context.user_data['stage1_answers'] = []
-    context.user_data['stage2_answers'] = []
-    context.user_data['current_question'] = 0
-    
-    keyboard = [[InlineKeyboardButton("🚀 Начать тест", callback_data='start_test')]]
+    """Начало разговора"""
+    keyboard = [
+        [InlineKeyboardButton("🎯 Начать тест", callback_data='start_test')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        "👋 *Добро пожаловать в тест внутренней карты!*\n\n"
-        "Этот тест поможет:\n"
-        "✅ Определить ваш архетип\n"
-        "✅ Найти слабое звено в вашей системе\n"
-        "✅ Получить персональную сказку-терапию\n\n"
-        "📊 Тест состоит из 36 вопросов\n"
-        "⏱ Займёт около 5 минут\n\n"
+        "Добро пожаловать! 👋\n\n"
+        "Я помогу вам пройти тест на профориентацию по методике Холланда (ХРБ).\n\n"
+        "Тест состоит из нескольких этапов:\n"
+        "1️⃣ Базовые вопросы (5 вопросов)\n"
+        "2️⃣ Дополнительные вопросы (3 вопроса)\n"
+        "3️⃣ Детальный анализ\n\n"
         "Готовы начать?",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
+        reply_markup=reply_markup
     )
     return HRB
 
+
 async def start_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Начало первого этапа"""
     query = update.callback_query
     await query.answer()
     
-    question = STAGE1_QUESTIONS[0]
-    keyboard = [[
-        InlineKeyboardButton("А", callback_data='stage1_A'),
-        InlineKeyboardButton("В", callback_data='stage1_B')
-    ]]
+    context.user_data['stage1_answers'] = []
+    context.user_data['current_question'] = 0
     
-    await query.message.edit_text(
-        f"*Вопрос 1/6:*\n\n{question}",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
-    )
+    await send_stage1_question(query, context)
     return STAGE1
 
-async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+
+async def send_stage1_question(query, context: ContextTypes.DEFAULT_TYPE):
+    """Отправка вопроса первого этапа"""
+    question_num = context.user_data['current_question']
     
-    answer = query.data.split('_')[1]
-    context.user_data['stage1_answers'].append(answer)
-    context.user_data['current_question'] += 1
-    q_num = context.user_data['current_question']
-    
-    if q_num >= len(STAGE1_QUESTIONS):
-        a_count = context.user_data['stage1_answers'].count('A')
-        b_count = context.user_data['stage1_answers'].count('B')
-        context.user_data['stage1_result'] = 'A' if a_count > b_count else 'B'
-        context.user_data['current_question'] = 0
-        
-        question = STAGE2_QUESTIONS[context.user_data['stage1_result']][0]
-        keyboard = [[
-            InlineKeyboardButton("А", callback_data='stage2_A'),
-            InlineKeyboardButton("В", callback_data='stage2_B')
-        ]]
-        
-        await query.message.edit_text(
-            f"*Вопрос 7/9:*\n\n{question}",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode='Markdown'
-        )
+    if question_num >= len(STAGE1_QUESTIONS):
+        await finish_stage1(query, context)
         return STAGE2
     
-    question = STAGE1_QUESTIONS[q_num]
-    keyboard = [[
-        InlineKeyboardButton("А", callback_data='stage1_A'),
-        InlineKeyboardButton("В", callback_data='stage1_B')
-    ]]
+    question = STAGE1_QUESTIONS[question_num]
+    keyboard = []
     
-    await query.message.edit_text(
-        f"*Вопрос {q_num + 1}/6:*\n\n{question}",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
+    for i, (option_text, score) in enumerate(question['options']):
+        keyboard.append([InlineKeyboardButton(
+            option_text,
+            callback_data=f'stage1_{i}'
+        )])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        f"📝 Этап 1/3\n\n{question['text']}",
+        reply_markup=reply_markup
     )
+
+
+async def stage1_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка ответа первого этапа"""
+    query = update.callback_query
+    await query.answer()
+    
+    answer_index = int(query.data.split('_')[1])
+    question_num = context.user_data['current_question']
+    question = STAGE1_QUESTIONS[question_num]
+    score = question['options'][answer_index][1]
+    
+    context.user_data['stage1_answers'].append(score)
+    context.user_data['current_question'] += 1
+    
+    await send_stage1_question(query, context)
     return STAGE1
 
+
+async def finish_stage1(query, context: ContextTypes.DEFAULT_TYPE):
+    """Завершение первого этапа"""
+    context.user_data['stage2_answers'] = []
+    context.user_data['current_question'] = 0
+    
+    await send_stage2_question(query, context)
+
+
+async def send_stage2_question(query, context: ContextTypes.DEFAULT_TYPE):
+    """Отправка вопроса второго этапа"""
+    question_num = context.user_data['current_question']
+    
+    if question_num >= len(STAGE2_QUESTIONS):
+        await finish_stage2(query, context)
+        return DETAILED_TEST
+    
+    question = STAGE2_QUESTIONS[question_num]
+    keyboard = []
+    
+    for i, (option_text, score) in enumerate(question['options']):
+        keyboard.append([InlineKeyboardButton(
+            option_text,
+            callback_data=f'stage2_{i}'
+        )])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        f"📝 Этап 2/3\n\n{question['text']}",
+        reply_markup=reply_markup
+    )
+
+
 async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка ответа второго этапа"""
+    query = update.callback_query
+    await query.answer()
+    
+    answer_index = int(query.data.split('_')[1])
+    question_num = context.user_data['current_question']
+    question = STAGE2_QUESTIONS[question_num]
+    score = question['options'][answer_index][1]
+    
+    context.user_data['stage2_answers'].append(score)
+    context.user_data['current_question'] += 1
+    
+    await send_stage2_question(query, context)
+    return STAGE2
+
+
+async def finish_stage2(query, context: ContextTypes.DEFAULT_TYPE):
+    """Завершение второго этапа и начало детального теста"""
+    context.user_data['detailed_answers'] = {}
+    context.user_data['current_type'] = 'realistic'
+    context.user_data['current_detailed_question'] = 0
+    
+    await send_detailed_question(query, context)
+
+
+async def send_detailed_question(query, context: ContextTypes.DEFAULT_TYPE):
+    """Отправка детального вопроса"""
+    current_type = context.user_data['current_type']
+    question_num = context.user_data['current_detailed_question']
+    
+    types_list = list(DETAILED_QUESTIONS.keys())
+    
+    if current_type not in types_list:
+        await show_results(query, context)
+        return ConversationHandler.END
+    
+    questions = DETAILED_QUESTIONS[current_type]
+    
+    if question_num >= len(questions):
+        # Переход к следующему типу
+        current_index = types_list.index(current_type)
+        if current_index + 1 < len(types_list):
+            context.user_data['current_type'] = types_list[current_index + 1]
+            context.user_data['current_detailed_question'] = 0
+            await send_detailed_question(query, context)
+        else:
+            await show_results(query, context)
+            return ConversationHandler.END
+        return DETAILED_TEST
+    
+    question_text = questions[question_num]
+    keyboard = [
+        [InlineKeyboardButton("Да", callback_data='detailed_yes')],
+        [InlineKeyboardButton("Скорее да", callback_data='detailed_rather_yes')],
+        [InlineKeyboardButton("Не знаю", callback_data='detailed_neutral')],
+        [InlineKeyboardButton("Скорее нет", callback_data='detailed_rather_no')],
+        [InlineKeyboardButton("Нет", callback_data='detailed_no')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    type_names = {
+        'realistic': 'Реалистический',
+        'investigative': 'Исследовательский',
+        'artistic': 'Артистический',
+        'social': 'Социальный',
+        'enterprising': 'Предпринимательский',
+        'conventional': 'Конвенциональный'
+    }
+    
+    await query.edit_message_text(
+        f"📝 Этап 3/3 - {type_names[current_type]} тип\n\n{question_text}",
+        reply_markup=reply_markup
+    )
+
+
+async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка детального ответа"""
     query = update.callback_query
     await query.answer()
     
     answer = query.data.split('_')[1]
-    context.user_data['stage2_answers'].append(answer)
-    context.user_data['current_question'] += 1
-    q_num = context.user_data['current_question']
+    score_map = {
+        'yes': 5,
+        'rather': 3,
+        'neutral': 0,
+        'no': -5
+    }
     
-    if q_num >= len(STAGE2_QUESTIONS[context.user_data['stage1_result']]):
-        a_count = context.user_data['stage2_answers'].count('A')
-        b_count = context.user_data['stage2_answers'].count('B')
-        stage2_result = 'A' if a_count > b_count else 'B'
-        
-        stage1 = context.user_data['stage1_result']
-        archetype = f"1{stage1.upper()}" if stage2_result == 'A' else f"1{chr(ord(stage1.upper()) + 1)}"
-        
-        if archetype not in ARCHETYPES:
-            archetype = '1A'
-        
-        context.user_data['archetype'] = archetype
-        context.user_data['detailed_answers'] = {level: [] for level in DETAILED_QUESTIONS.keys()}
-        context.user_data['current_level'] = 0
-        context.user_data['current_question'] = 0
-        
-        await query.message.edit_text(
-            f"✅ *Ваш архетип: {ARCHETYPES[archetype]['name']}*\n\n"
-            f"{ARCHETYPES[archetype]['description']}\n\n"
-            f"Теперь пройдём детальное тестирование по 6 уровням (30 вопросов).\n\n"
-            f"Оценивайте каждое утверждение от 1 до 5:\n"
-            f"1 - Совсем не согласен\n"
-            f"5 - Полностью согласен",
-            parse_mode='Markdown'
-        )
-        
-        level = list(DETAILED_QUESTIONS.keys())[0]
-        question = DETAILED_QUESTIONS[level][0]
-        keyboard = [[
-            InlineKeyboardButton("1", callback_data='detailed_1'),
-            InlineKeyboardButton("2", callback_data='detailed_2'),
-            InlineKeyboardButton("3", callback_data='detailed_3'),
-            InlineKeyboardButton("4", callback_data='detailed_4'),
-            InlineKeyboardButton("5", callback_data='detailed_5')
-        ]]
-        
-        await query.message.reply_text(
-            f"🎯 *{level}*\n\n*Вопрос 1/30:*\n\n{question}\n\n1 - Не согласен | 5 - Согласен",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode='Markdown'
-        )
-        return DETAILED_TEST
-    
-    question = STAGE2_QUESTIONS[context.user_data['stage1_result']][q_num]
-    keyboard = [[
-        InlineKeyboardButton("А", callback_data='stage2_A'),
-        InlineKeyboardButton("В", callback_data='stage2_B')
-    ]]
-    
-    await query.message.edit_text(
-        f"*Вопрос {7 + q_num}/9:*\n\n{question}",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
-    )
-    return STAGE2
-
-async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    
-    score = int(query.data.split('_')[1])
-    
-    levels = list(DETAILED_QUESTIONS.keys())
-    level_num = context.user_data['current_level']
-    q_num = context.user_data['current_question']
-    
-    level = levels[level_num]
-    context.user_data['detailed_answers'][level].append(score)
-    context.user_data['current_question'] += 1
-    
-    await query.message.delete()
-    
-    if context.user_data['current_question'] >= len(DETAILED_QUESTIONS[level]):
-        context.user_data['current_level'] += 1
-        context.user_data['current_question'] = 0
-        level_num = context.user_data['current_level']
-    
-    if level_num >= len(levels):
-        answers = context.user_data['detailed_answers']
-        level_scores = {lvl: sum(scores) for lvl, scores in answers.items()}
-        min_level = min(level_scores, key=level_scores.get)
-        archetype = context.user_data['archetype']
-        
-        message = f"✅ *РЕЗУЛЬТАТ*\n\n🎯 {ARCHETYPES[archetype]['name']}\n\n📊 *Баллы:*\n\n"
-        for lvl, score in level_scores.items():
-            emoji = '🔴' if lvl == min_level else '🟢'
-            message += f"{emoji} {lvl}: {score}/25\n"
-        
-        message += f"\n🎯 *Узел: {min_level}* ({level_scores[min_level]}/25)\n\n"
-        
-        file_key = f"{archetype}_{min_level}"
-        file_url = FAIRY_TALES.get(file_key)
-        
-        if file_url:
-            file_id = file_url.split('/d/')[1].split('/')[0]
-            direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-            
-            message += f"📖 Отправляю твою персональную сказку..."
-            await query.message.reply_text(message, parse_mode='Markdown')
-            
-            try:
-                await query.message.reply_document(
-                    document=direct_url,
-                    caption=f"📖 *Твоя сказка*\n\n🎯 {ARCHETYPES[archetype]['name']}\n🔴 Узел: {min_level}",
-                    parse_mode='Markdown'
-                )
-            except Exception as e:
-                logger.error(f"Ошибка отправки PDF: {e}")
-                keyboard = [[InlineKeyboardButton("📥 Открыть сказку", url=file_url)]]
-                await query.message.reply_text(
-                    "⚠️ Не удалось отправить файл автоматически.\nОткрой по кнопке ниже:",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
+    if 'rather' in answer:
+        if 'yes' in answer:
+            score = 3
         else:
-            message += f"📖 Сказка `{file_key}.pdf` скоро будет доступна"
-            await query.message.reply_text(message, parse_mode='Markdown')
-        
-        return ConversationHandler.END
+            score = -3
+    else:
+        score = score_map.get(answer, 0)
     
-    level = levels[level_num]
-    q_num = context.user_data['current_question']
-    question = DETAILED_QUESTIONS[level][q_num]
-    total = context.user_data['current_level'] * 5 + q_num + 1
+    current_type = context.user_data['current_type']
     
-    keyboard = [[
-        InlineKeyboardButton("1", callback_data='detailed_1'),
-        InlineKeyboardButton("2", callback_data='detailed_2'),
-        InlineKeyboardButton("3", callback_data='detailed_3'),
-        InlineKeyboardButton("4", callback_data='detailed_4'),
-        InlineKeyboardButton("5", callback_data='detailed_5')
-    ]]
+    if current_type not in context.user_data['detailed_answers']:
+        context.user_data['detailed_answers'][current_type] = []
     
-    await query.message.reply_text(
-        f"🎯 *{level}*\n\n*Вопрос {total}/30:*\n\n{question}\n\n1 - Не согласен | 5 - Согласен",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
-    )
+    context.user_data['detailed_answers'][current_type].append(score)
+    context.user_data['current_detailed_question'] += 1
+    
+    await send_detailed_question(query, context)
     return DETAILED_TEST
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("❌ Тест отменён. Напиши /start чтобы начать заново.")
+
+async def show_results(query, context: ContextTypes.DEFAULT_TYPE):
+    """Показ результатов"""
+    # Подсчёт баллов по типам
+    type_scores = {}
+    
+    for type_name, answers in context.user_data['detailed_answers'].items():
+        type_scores[type_name] = sum(answers)
+    
+    # Сортировка типов по баллам
+    sorted_types = sorted(type_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    # Формирование результата
+    type_names = {
+        'realistic': 'Реалистический (R)',
+        'investigative': 'Исследовательский (I)',
+        'artistic': 'Артистический (A)',
+        'social': 'Социальный (S)',
+        'enterprising': 'Предпринимательский (E)',
+        'conventional': 'Конвенциональный (C)'
+    }
+    
+    result_text = "🎯 Результаты теста:\n\n"
+    
+    for i, (type_code, score) in enumerate(sorted_types[:3], 1):
+        result_text += f"{i}. {type_names[type_code]}: {score} баллов\n"
+    
+    result_text += "\n📋 Рекомендуемые профессии:\n\n"
+    
+    top_type = sorted_types[0][0]
+    professions = PROFESSIONS[top_type]
+    
+    for profession in professions:
+        result_text += f"• {profession}\n"
+    
+    result_text += "\n💡 Хотите пройти тест заново? Нажмите /start"
+    
+    keyboard = [[InlineKeyboardButton("🔄 Пройти заново", callback_data='start_test')]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(result_text, reply_markup=reply_markup)
     return ConversationHandler.END
 
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отмена теста"""
+    await update.message.reply_text(
+        "Тест отменён. Чтобы начать заново, нажмите /start"
+    )
+    return ConversationHandler.END
+
+
 def main():
+    """Запуск бота"""
     token = os.getenv('TELEGRAM_BOT_TOKEN')
     if not token:
         raise ValueError("❌ TELEGRAM_BOT_TOKEN не найден в переменных окружения!")
@@ -368,8 +476,28 @@ def main():
     
     application.add_handler(conv_handler)
     
-    logger.info("🤖 Бот запущен!")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Определяем режим работы
+    port = int(os.getenv('PORT', 10000))
+    webhook_url = os.getenv('RENDER_EXTERNAL_URL')
+    
+    if webhook_url:
+        # Режим webhook для Render
+        logger.info(f"🌐 Запуск в режиме webhook: {webhook_url}")
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=port,
+            url_path=token,
+            webhook_url=f"{webhook_url}/{token}",
+            drop_pending_updates=True
+        )
+    else:
+        # Режим polling для локального запуска
+        logger.info("🤖 Запуск в режиме polling")
+        application.run_polling(
+            allowed_updates=Update.ALL_TYPES,
+            drop_pending_updates=True
+        )
+
 
 if __name__ == '__main__':
     main()
