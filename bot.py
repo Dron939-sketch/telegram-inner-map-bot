@@ -98,6 +98,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
+    return ConversationHandler.END  # ✅ ДОБАВЛЕНО
 
 # Кнопки старта
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -224,7 +225,9 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         keyboard = [[InlineKeyboardButton("🔬 Углублённое сканирование", callback_data='detailed_test')]]
         await query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
-        return ConversationHandler.END
+        
+        # ✅ ВАЖНО: НЕ ЗАВЕРШАЕМ РАЗГОВОР, ЖДЁМ НАЖАТИЯ КНОПКИ
+        return STAGE2  # Остаёмся в состоянии STAGE2
     
     # Следующий вопрос этапа 2
     keyboard = [[InlineKeyboardButton("A", callback_data='stage2_A')], [InlineKeyboardButton("B", callback_data='stage2_B')]]
@@ -235,7 +238,7 @@ async def stage2_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return STAGE2
 
-# Начало детального теста
+# ✅ ИСПРАВЛЕНО: Начало детального теста
 async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -267,7 +270,7 @@ async def start_detailed_test(update: Update, context: ContextTypes.DEFAULT_TYPE
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
-    return DETAILED_TEST
+    return DETAILED_TEST  # ✅ ПЕРЕХОДИМ В СОСТОЯНИЕ DETAILED_TEST
 
 # Ответ детального теста
 async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -313,7 +316,7 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     level = levels[level_num]
     q_num = context.user_data['current_question']
     question = DETAILED_QUESTIONS[level][q_num]
-    total = level_num * 5 + q_num + 1
+    total = context.user_data['current_level'] * 5 + q_num + 1  # ✅ ИСПРАВЛЕНО
     
     keyboard = [[
         InlineKeyboardButton("1", callback_data='detailed_1'),
@@ -352,14 +355,17 @@ def main():
         states={
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],
             STAGE1: [CallbackQueryHandler(stage1_answer, pattern='^stage1_')],
-            STAGE2: [CallbackQueryHandler(stage2_answer, pattern='^stage2_')],
+            STAGE2: [
+                CallbackQueryHandler(stage2_answer, pattern='^stage2_'),
+                CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$')  # ✅ ДОБАВЛЕНО
+            ],
             DETAILED_TEST: [CallbackQueryHandler(detailed_answer, pattern='^detailed_')]
         },
         fallbacks=[CommandHandler('cancel', cancel)]
     )
     
     app.add_handler(conv_handler)
-    app.add_handler(CallbackQueryHandler(start_detailed_test, pattern='^detailed_test$'))
+    # ✅ УДАЛЕНА ДУБЛИРУЮЩАЯ СТРОКА
     
     logger.info("🤖 Бот запущен!")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
