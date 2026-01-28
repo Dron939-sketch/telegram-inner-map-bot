@@ -311,7 +311,7 @@ async def detailed_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message += f"\n🎯 *Узел: {min_level}* ({level_scores[min_level]}/25)\n\n📖 Сказка: `{archetype}_{min_level}.pdf`"
         await query.message.reply_text(message, parse_mode='Markdown')
         return ConversationHandler.END
-    
+
     # Следующий вопрос
     level = levels[level_num]
     q_num = context.user_data['current_question']
